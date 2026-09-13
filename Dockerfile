@@ -2,8 +2,8 @@
 # Multi-stage Dockerfile for SvelteKit on Raspberry Pi 5 (ARM64 / AMD64)
 # ==============================================================================
 
-# --- Stage 1: Build Stage ---
-FROM node:20-alpine AS builder
+# --- Stage 1: Build Stage (Runs natively on build host to avoid slow QEMU emulation) ---
+FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 
 WORKDIR /app
 
