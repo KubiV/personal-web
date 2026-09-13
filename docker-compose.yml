@@ -15,7 +15,7 @@ services:
       # Mount host NVMe content directory as READ-ONLY for security
       - ./server-content:/data/content:ro
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3001}:3000"
     networks:
       - tunnel_network
     labels:
@@ -39,8 +39,8 @@ services:
       - FB_DATABASE=/database/filebrowser.db
       - FB_ROOT=/srv
       - FB_PORT=80
-    expose:
-      - "80"
+    ports:
+      - "${CMS_PORT:-8085}:80"
     networks:
       - tunnel_network
     labels:
@@ -67,18 +67,20 @@ services:
 
   # ============================================================================
   # 4. Cloudflare Tunnel (cloudflared)
+  # Zakomentováno: Na Raspberry Pi již běží globální kontejner 'cloudflared'.
+  # Odkomentujte pouze v případě, že chcete dedikovaný tunel pro tento web.
   # ============================================================================
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-    networks:
-      - tunnel_network
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: personal-web-cloudflared
+  #   restart: unless-stopped
+  #   command: tunnel --no-autoupdate run
+  #   environment:
+  #     - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+  #   networks:
+  #     - tunnel_network
+  #   labels:
+  #     - "com.centurylinklabs.watchtower.enable=false"
 
 # ==============================================================================
 # Network connecting Web App, Filebrowser CMS and Cloudflare Tunnel
