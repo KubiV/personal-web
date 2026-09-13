@@ -14,8 +14,8 @@ services:
     volumes:
       # Mount host NVMe content directory as READ-ONLY for security
       - ./server-content:/data/content:ro
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     networks:
       - tunnel_network
     labels:

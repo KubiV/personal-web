@@ -14,7 +14,7 @@ echo "=========================================="
 echo "📡 Připojuji se k Raspberry Pi (${PI_HOST})..."
 echo "=========================================="
 
-ssh -o ConnectTimeout=10 "${PI_HOST}" "cd ${PI_DIR} && ./update.sh"
+ssh -o ConnectTimeout=10 "${PI_HOST}" "cd ${PI_DIR} && git pull origin main && chmod +x update.sh 2>/dev/null || true; cd ${PI_DIR} && ./update.sh"
 
 echo "=========================================="
 echo "🎉 Vzdálené nasazení proběhlo v pořádku!"
