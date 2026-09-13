@@ -188,9 +188,8 @@ Since content is stored as plain files in `server-content/blog/`, you can also c
 
 1. **Prepare directories on the Pi host**:
    ```bash
-   mkdir -p ./server-content/blog
-   mkdir -p ./filebrowser
-   touch ./filebrowser/filebrowser.db
+   mkdir -p ./server-content/blog ./filebrowser
+   sudo chown -R 1000:1000 ./filebrowser ./server-content
    ```
 
 2. **Configure Environment Variables**:

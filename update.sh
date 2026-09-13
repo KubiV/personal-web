@@ -17,11 +17,16 @@ echo "=========================================="
 echo "📥 Stahuji nejnovější změny z GitHubu..."
 git pull origin main
 
-# 2. Znovu sestavit Docker kontejner a restartovat služby
-echo "🔨 Sestavuji a spouštím kontejnery..."
-docker compose up -d --build
+# 2. Zajistit existenci potřebných složek a oprávnění pro Filebrowser
+mkdir -p filebrowser server-content/blog
+sudo chown -R 1000:1000 filebrowser server-content 2>/dev/null || true
 
-# 3. Vyčistit staré nepoužívané Docker vrstvy (aby se neplnil NVMe disk)
+# 3. Stáhnout nejnovější sestavený image (z GHCR) a restartovat kontejnery
+echo "🔨 Stahuji a spouštím kontejnery..."
+docker compose pull || true
+docker compose up -d
+
+# 4. Vyčistit staré nepoužívané Docker vrstvy (aby se neplnil NVMe disk)
 echo "🧹 Pročišťuji staré nepoužívané Docker vrstvy..."
 docker image prune -f
 
