@@ -6,8 +6,8 @@
 
 set -e
 
-# Výchozí hostitel na Raspberry Pi (lze upravit na IP nebo Tailscale jméno)
-PI_HOST="${PI_HOST:-pi@100.110.63.109}"
+# Výchozí hostitel na Raspberry Pi (lze upravit na lokální jméno, IP nebo Tailscale IP)
+PI_HOST="${PI_HOST:-pi@malina.local}"
 PI_DIR="${PI_DIR:-/srv/compose/personal-web}"
 
 echo "=========================================="
