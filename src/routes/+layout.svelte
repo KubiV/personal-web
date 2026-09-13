@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { page } from '$app/stores';
 	import SocialLinks from '$lib/SocialLinks.svelte';
+	import LogoIcon from '$lib/components/LogoIcon.svelte';
 </script>
 
 <svelte:head>
@@ -11,7 +12,7 @@
 <header class="site-header">
 	<div class="container">
 		<a href="/" class="site-title">
-			<img src="/logos/logo-flat.svg" alt="" class="site-logo-icon" width="22" height="36" />
+			<LogoIcon />
 			<span>KubiV</span>
 		</a>
 		<nav class="site-nav" aria-label="Main Navigation">

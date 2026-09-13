@@ -89,7 +89,7 @@ body::before {
 }
 
 .site-logo-icon {
-	width: auto;
+	width: 22px;
 	height: 36px;
 	display: block;
 	flex-shrink: 0;

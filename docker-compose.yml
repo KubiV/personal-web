@@ -3,7 +3,8 @@ services:
   # 1. SvelteKit Web Application (Public Blog)
   # ============================================================================
   personal-web:
-    image: ${PERSONAL_WEB_IMAGE:-ghcr.io/username/personal-web:latest}
+    build: .
+    image: ${PERSONAL_WEB_IMAGE:-ghcr.io/kubiv/personal-web:latest}
     container_name: personal-web
     restart: unless-stopped
     environment:
