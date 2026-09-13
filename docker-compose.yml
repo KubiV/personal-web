@@ -1,0 +1,88 @@
+services:
+  # ============================================================================
+  # 1. SvelteKit Web Application (Public Blog)
+  # ============================================================================
+  personal-web:
+    image: ${PERSONAL_WEB_IMAGE:-ghcr.io/username/personal-web:latest}
+    container_name: personal-web
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - CONTENT_PATH=/data/content
+    volumes:
+      # Mount host NVMe content directory as READ-ONLY for security
+      - ./server-content:/data/content:ro
+    expose:
+      - "3000"
+    networks:
+      - tunnel_network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ============================================================================
+  # 2. Filebrowser - Lightweight Browser-based CMS
+  # ============================================================================
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    restart: unless-stopped
+    # Run as host user UID:GID (default: 1000:1000 for standard pi user)
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      # Mount content directory with READ-WRITE permissions to create/edit articles
+      - ./server-content:/srv
+      # Persist filebrowser user accounts, passwords, and preferences
+      - ./filebrowser/filebrowser.db:/database/filebrowser.db
+    environment:
+      - FB_DATABASE=/database/filebrowser.db
+      - FB_ROOT=/srv
+      - FB_PORT=80
+    expose:
+      - "80"
+    networks:
+      - tunnel_network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  # ============================================================================
+  # 3. Watchtower - Automated CD Container Updater
+  # ============================================================================
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      # Clean up stale, dangling images after updating
+      - WATCHTOWER_CLEANUP=true
+      # Check GHCR every 300 seconds (5 minutes)
+      - WATCHTOWER_POLL_INTERVAL=300
+      # Only watch containers that have the label: com.centurylinklabs.watchtower.enable=true
+      - WATCHTOWER_LABEL_ENABLE=true
+    networks:
+      - tunnel_network
+
+  # ============================================================================
+  # 4. Cloudflare Tunnel (cloudflared)
+  # ============================================================================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    networks:
+      - tunnel_network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+# ==============================================================================
+# Network connecting Web App, Filebrowser CMS and Cloudflare Tunnel
+# ==============================================================================
+networks:
+  tunnel_network:
+    name: tunnel_network
+    driver: bridge

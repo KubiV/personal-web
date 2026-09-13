@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# SvelteKit & Vite Build outputs
+.svelte-kit/
+build/
+dist/
+
+# Host-only Server Content (Strict Separation of Code and Content)
+server-content/
+server-content/**
+
+# Filebrowser database and local configs
+filebrowser/
+*.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/

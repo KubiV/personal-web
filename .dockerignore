@@ -1,0 +1,15 @@
+node_modules
+.svelte-kit
+build
+dist
+.git
+.github
+server-content
+filebrowser
+Dockerfile*
+docker-compose*.yml
+.env*
+*.log
+.DS_Store
+README.md
+LICENSE
