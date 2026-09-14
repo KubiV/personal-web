@@ -114,23 +114,23 @@
 		renderer.setSize(size, size, false);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
-		// 2. Osvětlení ladící k barvám a stínům reálného 3D loga
-		const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+		// 2. Osvětlení ladící k barvám a stínům reálného 3D loga (osvit shora na viditelnou stranu)
+		const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
 		scene.add(ambientLight);
 
-		// Hlavní světlo shora zleva
-		const mainLight = new THREE.DirectionalLight(0xffffff, 2.2);
-		mainLight.position.set(-3, 4, 5);
+		// Hlavní směrové světlo shora zepředu na viditelnou čelní stranu modelu
+		const mainLight = new THREE.DirectionalLight(0xffffff, 2.8);
+		mainLight.position.set(0.5, 7.0, 5.5);
 		scene.add(mainLight);
 
-		// Doplňkové světlo s modrým akcentem zespodu zprava
-		const fillLight = new THREE.DirectionalLight(0x0099ff, 1.2);
-		fillLight.position.set(4, -3, 3);
+		// Jemné doplňkové světlo shora zleva pro přirozené prosvětlení stínů
+		const fillLight = new THREE.DirectionalLight(0x66c0ff, 0.8);
+		fillLight.position.set(-3.0, 3.0, 4.0);
 		scene.add(fillLight);
 
-		// Zpětné obrysové světlo (rim light)
-		const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.0);
-		rimLight.position.set(3, 4, -4);
+		// Horní zadní obrysové světlo (rim light) zvýrazňující horní kontury modelu
+		const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.1);
+		rimLight.position.set(2.0, 6.0, -2.5);
 		scene.add(rimLight);
 
 		// 3. Skupina pro model
@@ -142,11 +142,11 @@
 		targetRot = { ...initRotRad };
 		modelGroup.rotation.set(currentRot.x, currentRot.y, currentRot.z);
 
-		// Výchozí metalický PBR materiál pro OBJ bez materiálů (odpovídá reálnému modrému 3D renderu)
+		// Výchozí anodizovaný PBR materiál pro OBJ bez materiálů (odpovídá reálnému modrému 3D renderu)
 		const defaultMascotMaterial = new THREE.MeshStandardMaterial({
 			color: 0x0095f8,
-			metalness: 0.72,
-			roughness: 0.28
+			metalness: 0.50,
+			roughness: 0.36
 		});
 
 		function setupLoadedObject(object3D, applyMaterialIfMissing = true) {
@@ -162,8 +162,8 @@
 
 					child.material = new THREE.MeshStandardMaterial({
 						color: baseColor,
-						metalness: 0.70,
-						roughness: 0.28
+						metalness: 0.50,
+						roughness: 0.36
 					});
 				}
 			});
