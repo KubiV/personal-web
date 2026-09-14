@@ -1,13 +1,43 @@
 <script>
+	import { page } from '$app/stores';
 	import SocialLinks from '$lib/SocialLinks.svelte';
 	import Logo3D from '$lib/components/Logo3D.svelte';
 	import PostListItem from '$lib/components/PostListItem.svelte';
 	export let data;
+
+	$: siteSchema = JSON.stringify({
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'WebSite',
+				'@id': `${$page.url.origin}/#website`,
+				url: $page.url.origin,
+				name: 'KubiV',
+				description: 'Osobní web a blog KubiV - technologie, software, hardware a projekty.',
+				inLanguage: 'cs-CZ'
+			},
+			{
+				'@type': 'Person',
+				'@id': `${$page.url.origin}/#person`,
+				name: 'KubiV',
+				url: `${$page.url.origin}/about`,
+				sameAs: ['https://github.com/KubiV']
+			}
+		]
+	});
 </script>
 
 <svelte:head>
 	<title>KubiV - Personal Website</title>
 	<meta name="description" content="Osobní web a blog KubiV - technologie, software, hardware a projekty." />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="KubiV - Personal Website" />
+	<meta property="og:description" content="Osobní web a blog KubiV - technologie, software, hardware a projekty." />
+	<meta property="og:url" content={$page.url.origin} />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="KubiV - Personal Website" />
+	<meta name="twitter:description" content="Osobní web a blog KubiV - technologie, software, hardware a projekty." />
+	{@html `<script type="application/ld+json">${siteSchema}</` + `script>`}
 </svelte:head>
 
 <section class="intro-section" style="margin-bottom: 2.5rem;">

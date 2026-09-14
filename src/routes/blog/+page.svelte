@@ -1,4 +1,5 @@
 <script>
+	import { page } from '$app/stores';
 	import PostListItem from '$lib/components/PostListItem.svelte';
 	export let data;
 	let activeFilter = 'all';
@@ -13,6 +14,13 @@
 <svelte:head>
 	<title>Blog - KubiV</title>
 	<meta name="description" content="Články, poznámky a návody na webu KubiV." />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Blog - KubiV" />
+	<meta property="og:description" content="Články, poznámky a návody na webu KubiV." />
+	<meta property="og:url" content="{$page.url.origin}/blog" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="Blog - KubiV" />
+	<meta name="twitter:description" content="Články, poznámky a návody na webu KubiV." />
 </svelte:head>
 
 <div style="margin-bottom: 2rem;">

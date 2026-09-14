@@ -1,4 +1,5 @@
 <script>
+	import { page } from '$app/stores';
 	import PostListItem from '$lib/components/PostListItem.svelte';
 	export let data;
 	$: currentCategoryLower = data.category.toLowerCase();
@@ -13,6 +14,13 @@
 <svelte:head>
 	<title>Kategorie: {data.category} - KubiV</title>
 	<meta name="description" content="Články v kategorii {data.category} na webu KubiV." />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Kategorie: {data.category} - KubiV" />
+	<meta property="og:description" content="Články v kategorii {data.category} na webu KubiV." />
+	<meta property="og:url" content="{$page.url.origin}{$page.url.pathname}" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="Kategorie: {data.category} - KubiV" />
+	<meta name="twitter:description" content="Články v kategorii {data.category} na webu KubiV." />
 </svelte:head>
 
 <div class="category-header" style="margin-bottom: 2rem;">

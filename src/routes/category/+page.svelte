@@ -1,4 +1,5 @@
 <script>
+	import { page } from '$app/stores';
 	import PostListItem from '$lib/components/PostListItem.svelte';
 	export let data;
 
@@ -18,6 +19,13 @@
 <svelte:head>
 	<title>Kategorie článků - KubiV</title>
 	<meta name="description" content="Prohlížeč článků podle kategorií a témat na webu KubiV." />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Kategorie článků - KubiV" />
+	<meta property="og:description" content="Prohlížeč článků podle kategorií a témat na webu KubiV." />
+	<meta property="og:url" content="{$page.url.origin}/category" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="Kategorie článků - KubiV" />
+	<meta name="twitter:description" content="Prohlížeč článků podle kategorií a témat na webu KubiV." />
 </svelte:head>
 
 <div class="category-overview-header">

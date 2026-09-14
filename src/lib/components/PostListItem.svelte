@@ -2,6 +2,29 @@
 	export let post;
 	export let headingLevel = 'h2';
 	export let showCategory = true;
+	const langNames = {
+		cs: 'Čeština (CZ)',
+		cz: 'Čeština (CZ)',
+		en: 'English (EN)',
+		sk: 'Slovenčina (SK)',
+		de: 'Deutsch (DE)',
+		fr: 'Français (FR)',
+		es: 'Español (ES)',
+		it: 'Italiano (IT)',
+		pl: 'Polski (PL)',
+		ua: 'Українська (UA)',
+		uk: 'Українська (UA)'
+	};
+
+	function getLangLabel(lang) {
+		const code = (lang || '').toLowerCase();
+		return code === 'cs' ? 'CZ' : code.toUpperCase();
+	}
+
+	function getLangTitle(lang) {
+		const code = (lang || '').toLowerCase();
+		return langNames[code] || code.toUpperCase();
+	}
 </script>
 
 <li class="post-list-item" class:has-thumbnail={Boolean(post.image)}>
@@ -27,9 +50,13 @@
 				</a>
 			{/if}
 			{#if post.languages && post.languages.length > 0}
-				<span class="lang-badges">
+				<span class="lang-badges" aria-label="Dostupné jazyky">
 					{#each post.languages as l}
-						<span class="lang-badge" class:accent={l === 'en'}>{l.toUpperCase()}</span>
+						<span class="lang-badge" title={getLangTitle(l)}>
+							<span class="flag-text flag-{l.toLowerCase()}">
+								{getLangLabel(l)}
+							</span>
+						</span>
 					{/each}
 				</span>
 			{/if}

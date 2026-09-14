@@ -1,22 +1,83 @@
 <script>
+	import { page } from '$app/stores';
 	export let data;
 	$: post = data.post;
+
+	const langTitles = {
+		cs: 'Čeština (CZ)',
+		cz: 'Čeština (CZ)',
+		en: 'English (EN)',
+		sk: 'Slovenčina (SK)',
+		de: 'Deutsch (DE)',
+		fr: 'Français (FR)',
+		es: 'Español (ES)',
+		it: 'Italiano (IT)',
+		pl: 'Polski (PL)',
+		ua: 'Українська (UA)',
+		uk: 'Українська (UA)'
+	};
+
+	function getLangTitle(lang) {
+		const code = (lang || '').toLowerCase();
+		return langTitles[code] || code.toUpperCase();
+	}
+
+	$: articleSchema = JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'BlogPosting',
+		headline: post.title,
+		description: post.description || '',
+		image: post.image ? `${$page.url.origin}${post.image}` : undefined,
+		datePublished: post.date,
+		author: {
+			'@type': 'Person',
+			name: 'KubiV',
+			url: `${$page.url.origin}/about`
+		},
+		publisher: {
+			'@type': 'Person',
+			name: 'KubiV',
+			url: `${$page.url.origin}`
+		},
+		mainEntityOfPage: {
+			'@type': 'WebPage',
+			'@id': `${$page.url.origin}/blog/${post.slug}`
+		},
+		inLanguage: post.lang === 'cs' ? 'cs-CZ' : (post.lang === 'en' ? 'en-US' : post.lang),
+		articleSection: post.category
+	});
 </script>
 
 <svelte:head>
 	<title>{post.title} - KubiV</title>
+	<meta property="og:type" content="article" />
 	<meta property="og:title" content={post.title} />
+	<meta property="og:url" content="{$page.url.origin}/blog/{post.slug}{$page.url.searchParams.has('lang') ? `?lang=${post.lang}` : ''}" />
+	<meta property="article:published_time" content={post.date} />
+	<meta property="article:author" content="KubiV" />
+	{#if post.category}
+		<meta property="article:section" content={post.category} />
+	{/if}
 	<meta name="twitter:title" content={post.title} />
+	<meta name="twitter:card" content={post.image ? "summary_large_image" : "summary"} />
 	{#if post.description}
 		<meta name="description" content={post.description} />
 		<meta property="og:description" content={post.description} />
 		<meta name="twitter:description" content={post.description} />
 	{/if}
 	{#if post.image}
-		<meta property="og:image" content={post.image} />
-		<meta name="twitter:image" content={post.image} />
-		<meta name="twitter:card" content="summary_large_image" />
+		<meta property="og:image" content="{$page.url.origin}{post.image}" />
+		<meta name="twitter:image" content="{$page.url.origin}{post.image}" />
 	{/if}
+
+	{#if post.availableLanguages && post.availableLanguages.length > 1}
+		{#each post.availableLanguages as l}
+			<link rel="alternate" hreflang={l} href="{$page.url.origin}/blog/{post.slug}?lang={l}" />
+		{/each}
+		<link rel="alternate" hreflang="x-default" href="{$page.url.origin}/blog/{post.slug}" />
+	{/if}
+
+	{@html `<script type="application/ld+json">${articleSchema}</` + `script>`}
 </svelte:head>
 
 <article class="article-container">
@@ -37,9 +98,11 @@
 						class="lang-btn"
 						class:active={post.lang === langCode}
 						aria-label={langCode.toUpperCase()}
-						title={langCode === 'cs' ? 'Čeština' : (langCode === 'en' ? 'English' : (langCode === 'fr' ? 'Français' : langCode.toUpperCase()))}
+						title={getLangTitle(langCode)}
 					>
-						{langCode === 'cs' ? 'CZ' : langCode.toUpperCase()}
+						<span class="flag-text flag-{langCode.toLowerCase()}">
+							{langCode.toLowerCase() === 'cs' ? 'CZ' : langCode.toUpperCase()}
+						</span>
 					</a>
 				{/each}
 			</div>

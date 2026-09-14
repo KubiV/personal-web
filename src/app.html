@@ -1,11 +1,72 @@
 <!doctype html>
-<html lang="en">
+<html lang="%lang%">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="alternate icon" type="image/png" sizes="64x64" href="/favicon.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<script>
+			(function() {
+				try {
+					var override = localStorage.getItem('theme-override') || localStorage.getItem('theme-preference');
+					var isDark = false;
+					if (override === 'dark') {
+						isDark = true;
+					} else if (override === 'light') {
+						isDark = false;
+					} else {
+						var systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+						if (systemDark) {
+							isDark = true;
+						} else {
+							var now = new Date();
+							var locStr = localStorage.getItem('user_location');
+							var lat = null, lng = null;
+							if (locStr) {
+								try {
+									var parsed = JSON.parse(locStr);
+									lat = parsed.lat;
+									lng = parsed.lng;
+								} catch (e) {}
+							}
+							if (lat == null || lng == null) {
+								var offsetHours = -now.getTimezoneOffset() / 60;
+								lng = Math.max(-180, Math.min(180, offsetHours * 15));
+								lat = 50.0;
+							}
+							var dayOfYear = Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 1)) / 86400000) + 1;
+							var gamma = ((2 * Math.PI) / 365) * (dayOfYear - 1);
+							var eqtime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+							var decl = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma) - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
+							var latRad = (lat * Math.PI) / 180;
+							var cosZenith = Math.cos((90.833 * Math.PI) / 180);
+							var cosOmega = (cosZenith - Math.sin(latRad) * Math.sin(decl)) / (Math.cos(latRad) * Math.cos(decl));
+							if (cosOmega > 1) {
+								isDark = true;
+							} else if (cosOmega < -1) {
+								isDark = false;
+							} else {
+								var omega = Math.acos(cosOmega) * (180 / Math.PI);
+								var solarNoonUtc = 720 - 4 * lng - eqtime;
+								var startOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+								var sunrise = new Date(startOfDay + (solarNoonUtc - 4 * omega) * 60000);
+								var sunset = new Date(startOfDay + (solarNoonUtc + 4 * omega) * 60000);
+								var nowMs = now.getTime();
+								isDark = nowMs < sunrise.getTime() || nowMs >= sunset.getTime();
+							}
+						}
+					}
+					var root = document.documentElement;
+					root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+					if (isDark) {
+						root.classList.add('dark');
+					} else {
+						root.classList.remove('dark');
+					}
+				} catch (_) {}
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

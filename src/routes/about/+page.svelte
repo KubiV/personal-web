@@ -1,15 +1,60 @@
 <script>
+	import { page } from '$app/stores';
 	import SocialLinks from '$lib/SocialLinks.svelte';
 	import Logo3D from '$lib/components/Logo3D.svelte';
 	export let data;
 	$: about = data.about;
+
+	const langTitles = {
+		cs: 'Čeština (CZ)',
+		cz: 'Čeština (CZ)',
+		en: 'English (EN)',
+		sk: 'Slovenčina (SK)',
+		de: 'Deutsch (DE)',
+		fr: 'Français (FR)',
+		es: 'Español (ES)',
+		it: 'Italiano (IT)',
+		pl: 'Polski (PL)',
+		ua: 'Українська (UA)',
+		uk: 'Українська (UA)'
+	};
+
+	function getLangTitle(lang) {
+		const code = (lang || '').toLowerCase();
+		return langTitles[code] || code.toUpperCase();
+	}
+
+	$: personSchema = JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'Person',
+		name: 'KubiV',
+		url: `${$page.url.origin}/about`,
+		description: about.description || 'Personal profile and projects',
+		sameAs: ['https://github.com/KubiV']
+	});
 </script>
 
 <svelte:head>
 	<title>{about.title} - KubiV</title>
 	{#if about.description}
 		<meta name="description" content={about.description} />
+		<meta property="og:description" content={about.description} />
+		<meta name="twitter:description" content={about.description} />
 	{/if}
+	<meta property="og:type" content="profile" />
+	<meta property="og:title" content="{about.title} - KubiV" />
+	<meta property="og:url" content="{$page.url.origin}/about" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="{about.title} - KubiV" />
+
+	{#if about.availableLanguages && about.availableLanguages.length > 1}
+		{#each about.availableLanguages as l}
+			<link rel="alternate" hreflang={l} href="{$page.url.origin}/about?lang={l}" />
+		{/each}
+		<link rel="alternate" hreflang="x-default" href="{$page.url.origin}/about" />
+	{/if}
+
+	{@html `<script type="application/ld+json">${personSchema}</` + `script>`}
 </svelte:head>
 
 <article class="about-container">
@@ -31,9 +76,11 @@
 							class="lang-btn"
 							class:active={about.lang === langCode}
 							aria-label={langCode.toUpperCase()}
-							title={langCode === 'cs' ? 'Čeština' : (langCode === 'en' ? 'English' : (langCode === 'fr' ? 'Français' : langCode.toUpperCase()))}
+							title={getLangTitle(langCode)}
 						>
-							{langCode === 'cs' ? 'CZ' : langCode.toUpperCase()}
+							<span class="flag-text flag-{langCode.toLowerCase()}">
+								{langCode.toLowerCase() === 'cs' ? 'CZ' : langCode.toUpperCase()}
+							</span>
 						</a>
 					{/each}
 				</div>
