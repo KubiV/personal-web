@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "_comment": "Přejmenujte/zkopírujte tento soubor do 'server-content/site.json' pro úpravu nastavení webu bez nutnosti sahat do Gitu.",
+
+  "title": "KubiV",
+  "tagline": "Personal Website",
+  "description": "Osobní web a blog KubiV - technologie, software, hardware a projekty.",
+  "url": "https://kubiv.cz",
+  "locale": "cs-CZ",
+
+  "author": {
+    "name": "KubiV",
+    "bio": "Technologický nadšenec, software & hardware.",
+    "url": "/about",
+    "github": "https://github.com/KubiV"
+  },
+
+  "theme": {
+    "_comment_accentColor": "Centrální barva akcentu (HEX). Z ní se automaticky odvozují odstíny pro hover, rámečky, poloprůhledná pozadí a horní gradient.",
+    "accentColor": "#14A4FF"
+  },
+
+  "logo": {
+    "_comment_iconUrl": "Cesta k logu v hlavičce. Můžete nahrát vlastní logo do server-content/assets/logo.svg a zadat '/custom-assets/logo.svg'.",
+    "text": "KubiV",
+    "iconUrl": "/logos/logo-flat.svg",
+    "show3D": true,
+    "model3d": "/models/logo.glb",
+    "fallback3d": "/logos/logo-3d.png"
+  },
+
+  "favicon": {
+    "svg": "/favicon.svg",
+    "png": "/favicon.png",
+    "appleTouchIcon": "/apple-touch-icon.png"
+  },
+
+  "social": {
+    "twitter": "https://twitter.com/kubi_vav",
+    "youtube": "https://www.youtube.com/channel/UC4giHTe7Ym-1kSip5TNiltQ",
+    "twitch": "https://www.twitch.tv/kubivak",
+    "instagram": "https://www.instagram.com/kubivcz/",
+    "linkedin": "https://www.linkedin.com/in/jakub-vavra",
+    "github": "https://github.com/KubiV"
+  },
+
+  "nav": [
+    { "label": "Home", "href": "/" },
+    { "label": "Blog", "href": "/blog" },
+    { "label": "Kategorie", "href": "/category" },
+    { "label": "O mně", "href": "/about" }
+  ],
+
+  "home": {
+    "heroTitle": "Vítejte",
+    "heroLead": "Vítejte v mém osobním koutku webu. Najdete zde články, poznámky a návody věnované moderním technologiím, softwarovému vývoji a zajímavým projektům.",
+    "heroText": "Můžete si projít nejnovější články níže, filtrovat podle témat v prohlížeči kategorií, nebo si přečíst více o mně."
+  },
+
+  "footer": {
+    "copyright": "KubiV",
+    "showYear": true
+  }
+}

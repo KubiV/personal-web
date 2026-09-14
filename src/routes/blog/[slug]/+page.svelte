@@ -22,6 +22,23 @@
 		return langTitles[code] || code.toUpperCase();
 	}
 
+	$: siteConfig = data?.siteConfig;
+	$: siteTitle = siteConfig?.title || 'KubiV';
+	$: defaultAuthorName = siteConfig?.author?.name || 'KubiV';
+
+	$: authorsList = post.authors && post.authors.length > 0 ? post.authors : [post.author || defaultAuthorName];
+	$: articleAuthorSchema = authorsList.length === 1
+		? {
+			'@type': 'Person',
+			name: authorsList[0],
+			...(authorsList[0] === defaultAuthorName ? { url: `${$page.url.origin}/about` } : {})
+		}
+		: authorsList.map((name) => ({
+			'@type': 'Person',
+			name,
+			...(name === defaultAuthorName ? { url: `${$page.url.origin}/about` } : {})
+		}));
+
 	$: articleSchema = JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'BlogPosting',
@@ -29,14 +46,10 @@
 		description: post.description || '',
 		image: post.image ? `${$page.url.origin}${post.image}` : undefined,
 		datePublished: post.date,
-		author: {
-			'@type': 'Person',
-			name: 'KubiV',
-			url: `${$page.url.origin}/about`
-		},
+		author: articleAuthorSchema,
 		publisher: {
 			'@type': 'Person',
-			name: 'KubiV',
+			name: siteTitle,
 			url: `${$page.url.origin}`
 		},
 		mainEntityOfPage: {
@@ -49,12 +62,15 @@
 </script>
 
 <svelte:head>
-	<title>{post.title} - KubiV</title>
+	<title>{post.title} - {siteTitle}</title>
 	<meta property="og:type" content="article" />
 	<meta property="og:title" content={post.title} />
 	<meta property="og:url" content="{$page.url.origin}/blog/{post.slug}{$page.url.searchParams.has('lang') ? `?lang=${post.lang}` : ''}" />
 	<meta property="article:published_time" content={post.date} />
-	<meta property="article:author" content="KubiV" />
+	{#each authorsList as authorName}
+		<meta property="article:author" content={authorName} />
+	{/each}
+	<meta name="author" content={post.author || defaultAuthorName} />
 	{#if post.category}
 		<meta property="article:section" content={post.category} />
 	{/if}
@@ -123,6 +139,16 @@
 			<a href="/category/{post.categorySlug || encodeURIComponent(post.category.toLowerCase())}" class="category-link">
 				{post.category}
 			</a>
+			{#if post.author}
+				<span>&bull;</span>
+				<span class="post-author">
+					{#if post.author === defaultAuthorName}
+						<a href="/about" class="author-link">{post.author}</a>
+					{:else}
+						{post.author}
+					{/if}
+				</span>
+			{/if}
 		</div>
 	</header>
 

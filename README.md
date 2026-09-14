@@ -26,6 +26,17 @@ A high-performance, ultra-minimalist personal website and blog designed to run o
 
 ---
 
+## ⚙️ Configuration & Theming (Konfigurace webu)
+
+The website architecture supports complete, upgrade-proof customization of site title, default author, central accent color, navigation, social media profiles, logos, and 3D models.
+
+👉 **Detailed Guide:** [KONFIGURACE.md](./KONFIGURACE.md) *(Kompletní český návod na konfiguraci a správu log)*
+
+- **Default config:** `src/lib/config/site.config.js` (tracked in git).
+- **Production runtime override:** copy `server-content/site.json.example` to `server-content/site.json`. Because `server-content/` is in `.gitignore` and mounted as a Docker volume (`/data/content`), your personal configuration, author name, accent color, and custom assets are **100% upgrade-safe and will never conflict during `git pull` updates**!
+
+---
+
 ## Content Structure
 
 The application expects the content directory to follow this structure:
@@ -49,6 +60,7 @@ Each `index.md` file must begin with YAML frontmatter:
 ---
 title: "Self-Hosting on a Raspberry Pi 5 with NVMe"
 date: "2026-09-13"
+author: "KubiV"        # Optional: single author or authors: ["Author 1", "Author 2"] (defaults to KubiV)
 category: "Hardware"
 description: "A deep dive into running a database-free personal website."
 image: "./cover.jpg"   # Optional: specific image, false/none, or defaults to 1st image in post
@@ -67,6 +79,12 @@ Images placed in the same folder can be referenced relatively:
 
 The server automatically resolves relative image links to the `/blog/[slug]/[image]` endpoint.
 ```
+
+### Article Authors (`author` / `authors`)
+
+- **Default (Omitted)**: When omitted, the website owner (`KubiV`) is used automatically.
+- **Single Author**: Use `author: "Author Name"`.
+- **Multiple Authors**: Use `authors: ["Author One", "Author Two"]` or `authors: "Author One, Author Two"`.
 
 ### Article Thumbnails (`image`)
 

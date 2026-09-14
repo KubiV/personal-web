@@ -82,7 +82,7 @@ body::before {
 	display: block;
 	height: 3px;
 	width: 100%;
-	background: linear-gradient(90deg, #14A4FF 0%, #0070c9 100%);
+	background: var(--top-bar-gradient, linear-gradient(90deg, #14A4FF 0%, #0070c9 100%));
 }
 
 /* --------------------------------------------------------------------------
@@ -269,6 +269,16 @@ hr {
 
 .post-meta .category-link:hover {
 	color: var(--link);
+}
+
+.post-meta .author-link {
+	color: inherit;
+	text-decoration: none;
+}
+
+.post-meta .author-link:hover {
+	color: var(--link);
+	text-decoration: underline;
 }
 
 /* Post list items */

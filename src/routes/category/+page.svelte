@@ -3,6 +3,9 @@
 	import PostListItem from '$lib/components/PostListItem.svelte';
 	export let data;
 
+	$: siteConfig = data?.siteConfig;
+	$: siteTitle = siteConfig?.title || 'KubiV';
+
 	function formatCats(count) {
 		if (count === 1) return "1 kategorie";
 		if (count >= 2 && count <= 4) return `${count} kategorie`;
@@ -17,15 +20,15 @@
 </script>
 
 <svelte:head>
-	<title>Kategorie článků - KubiV</title>
-	<meta name="description" content="Prohlížeč článků podle kategorií a témat na webu KubiV." />
+	<title>Kategorie článků - {siteTitle}</title>
+	<meta name="description" content="Prohlížeč článků podle kategorií a témat na webu {siteTitle}." />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Kategorie článků - KubiV" />
-	<meta property="og:description" content="Prohlížeč článků podle kategorií a témat na webu KubiV." />
+	<meta property="og:title" content="Kategorie článků - {siteTitle}" />
+	<meta property="og:description" content="Prohlížeč článků podle kategorií a témat na webu {siteTitle}." />
 	<meta property="og:url" content="{$page.url.origin}/category" />
 	<meta name="twitter:card" content="summary" />
-	<meta name="twitter:title" content="Kategorie článků - KubiV" />
-	<meta name="twitter:description" content="Prohlížeč článků podle kategorií a témat na webu KubiV." />
+	<meta name="twitter:title" content="Kategorie článků - {siteTitle}" />
+	<meta name="twitter:description" content="Prohlížeč článků podle kategorií a témat na webu {siteTitle}." />
 </svelte:head>
 
 <div class="category-overview-header">

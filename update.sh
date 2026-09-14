@@ -18,7 +18,8 @@ echo "📥 Stahuji nejnovější změny z GitHubu..."
 git pull origin main
 
 # 2. Zajistit existenci potřebných složek a oprávnění pro Filebrowser
-mkdir -p filebrowser server-content/blog
+mkdir -p filebrowser server-content/blog server-content/assets
+[ ! -f server-content/site.json.example ] && cp site.config.example.json server-content/site.json.example 2>/dev/null || true
 sudo chown -R 1000:1000 filebrowser server-content 2>/dev/null || true
 
 # 3. Stáhnout nejnovější sestavený image (z GHCR) a restartovat kontejnery

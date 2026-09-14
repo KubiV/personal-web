@@ -1,9 +1,11 @@
 import { getAllPosts, getAllCategories } from '$lib/server/content';
+import { getSiteConfig } from '$lib/server/config.js';
 
 export const prerender = false;
 
 export async function GET({ url }) {
-	const origin = process.env.PUBLIC_SITE_URL || process.env.ORIGIN || url.origin;
+	const siteConfig = getSiteConfig();
+	const origin = process.env.PUBLIC_SITE_URL || process.env.ORIGIN || siteConfig?.url || url.origin;
 	const posts = await getAllPosts();
 	const categories = await getAllCategories();
 

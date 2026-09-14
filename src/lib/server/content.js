@@ -2,21 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import { marked } from "marked";
+import { getContentPath, getSiteConfig } from "$lib/server/config.js";
 
-/**
- * Resolve the base content path.
- * In production / Docker, this defaults to /data/content.
- * In local development, falls back to ./server-content if /data/content does not exist.
- */
-export function getContentPath() {
-	if (process.env.CONTENT_PATH) {
-		return path.resolve(process.env.CONTENT_PATH);
-	}
-	if (fs.existsSync("/data/content")) {
-		return "/data/content";
-	}
-	return path.resolve(process.cwd(), "server-content");
-}
+export { getContentPath };
 
 /**
  * Get the path to the blog content directory.
@@ -62,6 +50,53 @@ export function slugifyCategory(text) {
 		.replace(/[^a-z0-9]+/g, "-")
 		.replace(/^-+|-+$/g, "");
 }
+
+export const DEFAULT_AUTHOR = "KubiV";
+
+/**
+ * Resolve author(s) from article frontmatter data.
+ * Supports:
+ * - author: "Jan Novák"
+ * - authors: ["Jan Novák", "Petr Svoboda"]
+ * - authors: "Jan Novák, Petr Svoboda"
+ * - author: ["Jan Novák", "Petr Svoboda"]
+ * Falls back to DEFAULT_AUTHOR ("KubiV").
+ */
+export function resolveAuthors(data) {
+	const defaultAuthor = getSiteConfig()?.author?.name || DEFAULT_AUTHOR;
+
+	if (!data) {
+		return {
+			authors: [defaultAuthor],
+			author: defaultAuthor
+		};
+	}
+
+	let authorList = [];
+
+	if (Array.isArray(data.authors)) {
+		authorList = data.authors.map((a) => String(a).trim()).filter(Boolean);
+	} else if (typeof data.authors === "string" && data.authors.trim()) {
+		authorList = data.authors
+			.split(",")
+			.map((a) => a.trim())
+			.filter(Boolean);
+	} else if (Array.isArray(data.author)) {
+		authorList = data.author.map((a) => String(a).trim()).filter(Boolean);
+	} else if (typeof data.author === "string" && data.author.trim()) {
+		authorList = [data.author.trim()];
+	}
+
+	if (authorList.length === 0) {
+		authorList = [defaultAuthor];
+	}
+
+	return {
+		authors: authorList,
+		author: authorList.join(", ")
+	};
+}
+
 
 /**
  * Detect all available language variants in a directory dynamically.
@@ -311,6 +346,7 @@ export async function getAllPosts() {
 
 				const postDate = data.date ? new Date(data.date) : new Date();
 				const thumbnail = resolveThumbnail(data, content, slug);
+				const postAuthors = resolveAuthors(data);
 
 				posts.push({
 					slug,
@@ -323,6 +359,8 @@ export async function getAllPosts() {
 						day: "numeric",
 						timeZone: "UTC"
 					}),
+					author: postAuthors.author,
+					authors: postAuthors.authors,
 					category,
 					categorySlug: slugifyCategory(category),
 					categories,
@@ -414,6 +452,7 @@ export async function getPostBySlug(slug, requestedLang = "cs") {
 
 		const postDate = data.date ? new Date(data.date) : new Date();
 		const thumbnail = resolveThumbnail(data, content, validSlug);
+		const postAuthors = resolveAuthors(data);
 		let category = data.category || (Array.isArray(data.categories) ? data.categories[0] : "General");
 		let categories = Array.isArray(data.categories)
 			? data.categories
@@ -441,6 +480,8 @@ export async function getPostBySlug(slug, requestedLang = "cs") {
 				day: "numeric",
 				timeZone: "UTC"
 			}),
+			author: postAuthors.author,
+			authors: postAuthors.authors,
 			category,
 			categorySlug: slugifyCategory(category),
 			categories,

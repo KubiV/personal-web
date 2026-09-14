@@ -4,6 +4,9 @@
 	export let data;
 	let activeFilter = 'all';
 
+	$: siteConfig = data?.siteConfig;
+	$: siteTitle = siteConfig?.title || 'KubiV';
+
 	$: filteredPosts = activeFilter === 'all'
 		? data.posts
 		: data.posts.filter((p) =>
@@ -12,15 +15,15 @@
 </script>
 
 <svelte:head>
-	<title>Blog - KubiV</title>
-	<meta name="description" content="Články, poznámky a návody na webu KubiV." />
+	<title>Blog - {siteTitle}</title>
+	<meta name="description" content="Články, poznámky a návody na webu {siteTitle}." />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Blog - KubiV" />
-	<meta property="og:description" content="Články, poznámky a návody na webu KubiV." />
+	<meta property="og:title" content="Blog - {siteTitle}" />
+	<meta property="og:description" content="Články, poznámky a návody na webu {siteTitle}." />
 	<meta property="og:url" content="{$page.url.origin}/blog" />
 	<meta name="twitter:card" content="summary" />
-	<meta name="twitter:title" content="Blog - KubiV" />
-	<meta name="twitter:description" content="Články, poznámky a návody na webu KubiV." />
+	<meta name="twitter:title" content="Blog - {siteTitle}" />
+	<meta name="twitter:description" content="Články, poznámky a návody na webu {siteTitle}." />
 </svelte:head>
 
 <div style="margin-bottom: 2rem;">

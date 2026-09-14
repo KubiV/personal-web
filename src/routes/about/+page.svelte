@@ -4,6 +4,12 @@
 	import Logo3D from '$lib/components/Logo3D.svelte';
 	export let data;
 	$: about = data.about;
+	$: siteConfig = data?.siteConfig;
+	$: siteTitle = siteConfig?.title || 'KubiV';
+	$: authorName = siteConfig?.author?.name || 'KubiV';
+	$: socialLinksList = siteConfig?.social
+		? Object.values(siteConfig.social).filter(Boolean)
+		: ['https://github.com/KubiV'];
 
 	const langTitles = {
 		cs: 'Čeština (CZ)',
@@ -27,25 +33,25 @@
 	$: personSchema = JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'Person',
-		name: 'KubiV',
+		name: authorName,
 		url: `${$page.url.origin}/about`,
 		description: about.description || 'Personal profile and projects',
-		sameAs: ['https://github.com/KubiV']
+		sameAs: socialLinksList
 	});
 </script>
 
 <svelte:head>
-	<title>{about.title} - KubiV</title>
+	<title>{about.title} - {siteTitle}</title>
 	{#if about.description}
 		<meta name="description" content={about.description} />
 		<meta property="og:description" content={about.description} />
 		<meta name="twitter:description" content={about.description} />
 	{/if}
 	<meta property="og:type" content="profile" />
-	<meta property="og:title" content="{about.title} - KubiV" />
+	<meta property="og:title" content="{about.title} - {siteTitle}" />
 	<meta property="og:url" content="{$page.url.origin}/about" />
 	<meta name="twitter:card" content="summary" />
-	<meta name="twitter:title" content="{about.title} - KubiV" />
+	<meta name="twitter:title" content="{about.title} - {siteTitle}" />
 
 	{#if about.availableLanguages && about.availableLanguages.length > 1}
 		{#each about.availableLanguages as l}
@@ -97,9 +103,16 @@
 					<SocialLinks />
 				</div>
 			</div>
-			<div class="about-profile-logo">
-				<Logo3D size={110} />
-			</div>
+			{#if siteConfig?.logo?.show3D !== false}
+				<div class="about-profile-logo">
+					<Logo3D
+						size={110}
+						src={siteConfig?.logo?.model3d || '/models/logo.glb'}
+						fallbackSrc={siteConfig?.logo?.fallback3d || '/logos/logo-3d.png'}
+						alt="{authorName} 3D Logo"
+					/>
+				</div>
+			{/if}
 		</div>
 	</header>
 

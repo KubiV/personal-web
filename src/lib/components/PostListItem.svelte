@@ -49,6 +49,10 @@
 					{post.category}
 				</a>
 			{/if}
+			{#if post.author}
+				<span>&bull;</span>
+				<span class="post-author">{post.author}</span>
+			{/if}
 			{#if post.languages && post.languages.length > 0}
 				<span class="lang-badges" aria-label="Dostupné jazyky">
 					{#each post.languages as l}
