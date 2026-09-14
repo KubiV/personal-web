@@ -1,6 +1,6 @@
 # ⚙️ Centrální konfigurace webu a bezpečné aktualizace
 
-Tento dokument detailně popisuje architekturu konfigurace webu, způsob změny centrální barvy, výchozího autora, názvu webu a umístění log a ikon. Zároveň vysvětluje, jak je zajištěna **100% kompatibilita při aktualizacích z GitHubu**.
+Tento dokument detailně popisuje architekturu konfigurace webu, způsob změny centrální barvy, výchozího autora, názvu webu, nastavení 3D modelů (Home i sekce O mně) a správné umístění favikon a log. Zároveň vysvětluje, jak je zajištěna **100% kompatibilita při aktualizacích z GitHubu**.
 
 ---
 
@@ -35,13 +35,13 @@ Web využívá robustní dvouúrovňový konfigurační systém:
 Při aktualizaci webu (např. spuštěním `./update.sh` nebo příkazu `git pull origin main`):
 
 1. **Žádné Git konflikty:**
-   - Vaše osobní konfigurace `server-content/site.json`, vlastní loga v `server-content/assets/` a veškeré články v `server-content/blog/` leží ve složce `server-content/`.
+   - Vaše osobní konfigurace `server-content/site.json`, vlastní loga a favikony v `server-content/assets/` a veškeré články v `server-content/blog/` leží ve složce `server-content/`.
    - Tato složka je uvedena v `.gitignore`. Git ji kompletně ignoruje a při příkazu `git pull origin main` se jí ani nedotkne.
 2. **Žádné rozbití kvůli chybějícím novým položkám:**
-   - Konfigurační loader provádí rekurzivní *deep merge*. Pokud budoucí aktualizace z GitHubu přidá do `site.config.js` novou funkci nebo novou konfigurační volbu, vaše existující `site.json` bude stále fungovat – chybějící položky se automaticky doplní z výchozí šablony.
+   - Konfigurační loader provádí rekurzivní *deep merge*. Pokud budoucí aktualizace z GitHubu přidá do `site.config.js` novou funkci nebo volbu, vaše existující `site.json` bude stále fungovat – chybějící položky se automaticky doplní z výchozí šablony.
 3. **Plná podpora Dockeru a GHCR image:**
    - Pokud používáte automatické stahování sestavených Docker obrazů (GHCR) přes Watchtower nebo `docker compose pull`, kontejner čte soubor `/data/content/site.json` z připojeného svazku.
-   - Po stažení nového image kontejneru zůstanou vaše barvy, názvy i autor zachovány bez nutnosti jakéhokoliv ručního zásahu!
+   - Po stažení nového image kontejneru zůstanou vaše barvy, názvy, autor i modely zachovány bez nutnosti ručního zásahu.
 
 ---
 
@@ -64,54 +64,94 @@ Web disponuje inteligentním generátorem stylů. Stačí nastavit jedinou barvu
 - **Ohraničení a rámečky** (`--accent-border` a `--quote-border`): citace a karty profilu.
 - **Efekt záře** (`--accent-glow`): aktivní prvky a přepínače.
 - **Horní dekorativní pruh** (`--top-bar-gradient`): plynulý barevný přechod v záhlaví stránky.
-
-Vše funguje automaticky v **obou režimech** (Light i Dark mode)!
-
----
-
-## 🖼️ Místa pro loga, ikony a 3D modely
-
-Máte na výběr ze dvou umístění podle toho, jak web provozujete:
-
-### 1. Možnost A: Složka `server-content/assets/` (Doporučeno pro server a Filebrowser)
-Všechny soubory nahrané do této složky jsou webem servírovány na URL `/custom-assets/<soubor>`:
-- **Výhoda:** Můžete je nahrát pohodlně přes webové CMS Filebrowser (přetažením myší) a `git pull` je nikdy nepřepíše.
-
-| Soubor v `server-content/assets/` | Nastavení v `server-content/site.json` | Účel |
-| :--- | :--- | :--- |
-| `moje-logo.svg` (nebo `.png`) | `"logo": { "iconUrl": "/custom-assets/moje-logo.svg" }` | Plochá ikona / logo v horní liště |
-| `favicon.svg` | `"favicon": { "svg": "/custom-assets/favicon.svg" }` | Moderní vektorová favikona |
-| `favicon.png` | `"favicon": { "png": "/custom-assets/favicon.png" }` | Rastrová favikona (pro starší prohlížeče) |
-| `apple-touch-icon.png` | `"favicon": { "appleTouchIcon": "/custom-assets/apple-touch-icon.png" }` | Ikona pro uložení na plochu mobilu |
-| `muj-model.glb` | `"logo": { "model3d": "/custom-assets/muj-model.glb" }` | 3D model loga pro úvodní sekci |
-| `render-3d.png` | `"logo": { "fallback3d": "/custom-assets/render-3d.png" }` | Náhradní 2D obrázek 3D loga |
+- **Výchozí SVG favikona:** pokud nemáte vlastní favikonu, výchozí logo favikony se v prohlížeči automaticky přebarví do vašeho zvoleného odstínu!
 
 ---
 
-### 2. Možnost B: Složka `static/` (Pro vývojáře přímo v Gitu)
-Pokud preferujete spravovat loga přímo v repozitáři:
-- `static/logos/logo-flat.svg` – výchozí vektorové logo v navigaci (podporuje `fill="currentColor"`)
-- `static/logos/logo-3d.png` – výchozí rastrový render 3D loga
-- `static/models/logo.glb` (nebo `logo.obj` + `logo.mtl`) – výchozí 3D model
-- `static/favicon.svg`, `static/favicon.png`, `static/apple-touch-icon.png` – výchozí ikony webu
+## 🔖 Jak nastavit Favicon (ikona webu v záložce prohlížeče)
+
+Favicon nyní funguje **naprosto jednoduše bez složitého nastavování**:
+
+### 🎯 Nejrychlejší způsob:
+Jednoduše nahrajte soubor `favicon.svg`, `favicon.png` nebo `favicon.ico` do složky:
+👉 `server-content/assets/` *(např. přetažením myší ve Filebrowser CMS)*
+
+Web automaticky detekuje soubory v `server-content/assets/` a okamžitě je začne servírovat:
+- `server-content/assets/favicon.svg` &rarr; automaticky dostupná na `/favicon.svg`
+- `server-content/assets/favicon.png` &rarr; automaticky dostupná na `/favicon.png`
+- `server-content/assets/favicon.ico` &rarr; automaticky dostupná na `/favicon.ico`
+- `server-content/assets/apple-touch-icon.png` &rarr; automaticky dostupná na `/apple-touch-icon.png`
+
+Není potřeba nic měnit v kódu ani spouštět build!
 
 ---
 
-## 📋 Kompletní šablona `server-content/site.json`
+## 🧊 Nastavení 3D loga a modelů (`logo3d`)
 
-Pro aktivaci vlastní konfigurace stačí zkopírovat soubor `server-content/site.json.example` do `server-content/site.json`:
+3D model lze velmi přehledně a granulárně nastavit zvlášť pro hlavní stránku a zvlášť pro sekci "O mně":
+
+```json
+{
+  "logo3d": {
+    "enabled": true,
+    "showOnHome": true,
+    "showOnAbout": true,
+    "home": {
+      "model": "/models/logo.glb",
+      "fallbackImage": "/logos/logo-3d.png",
+      "size": 125
+    },
+    "about": {
+      "model": "/models/pandulak.obj",
+      "fallbackImage": "/logos/logo-3d.png",
+      "size": 110
+    }
+  }
+}
+```
+
+### Možnosti:
+- **`enabled`** (`true` / `false`): Globální vypínač. Pokud nastavíte `false`, 3D se nezobrazí nikde.
+- **`showOnHome`** (`true` / `false`): Zda zobrazovat 3D logo v úvodní sekci na hlavní stránce.
+- **`showOnAbout`** (`true` / `false`): Zda zobrazovat 3D model (např. panáčka) v profilové kartě v sekci "O mně". Pokud je `false`, karta "O mně" je čistě textová a text přirozeně využije celou šířku.
+- **`home.model`**: Cesta k 3D modelu na hlavní stránce (`.glb` nebo `.obj`). Může být `/models/logo.glb` nebo váš vlastní model z `/custom-assets/muj-model.glb`.
+- **`about.model`**: Cesta k 3D modelu pro sekci O mně. Pokud ponecháte prázdné (`""`), použije se stejný model jako na hlavní stránce. Pokud chcete v sekci O mně postavičku/panáčka, zadejte např. `"/models/pandulak.obj"` nebo model nahraný do `server-content/assets/`.
+- **`home.size`** a **`about.size`**: Velikost 3D plátna v pixelech.
+
+---
+
+## 👤 Sekce "O mně" (`about`)
+
+V konfiguraci můžete přizpůsobit nadpis a úvodní text (perex) profilové karty na stránce `/about`:
+
+```json
+{
+  "about": {
+    "title": "O mně",
+    "description": "Představení, technologické zaměření, projekty a kontakt na KubiV."
+  }
+}
+```
+
+Tento text se zobrazuje v horní kartě profilu vedle 3D modelu a zároveň se propisuje do vyhledávačů (SEO) a Schema.org. Samotný dlouhý text pod kartou se pak standardně načítá z Markdownu (`server-content/about/index.cs.md` nebo `index.en.md`).
+
+---
+
+## 📋 Kompletní vzor `server-content/site.json`
+
+Zkopírujte `site.config.example.json` do `server-content/site.json` a upravte podle sebe:
 
 ```json
 {
   "title": "Moje Jméno",
-  "tagline": "Osobní blog a projekty",
-  "description": "Zápisky o programování, technologiích a mých projektech.",
+  "tagline": "Personal Website",
+  "description": "Osobní web a blog - technologie, software, hardware a projekty.",
   "url": "https://mojedomena.cz",
   "locale": "cs-CZ",
 
   "author": {
     "name": "Moje Jméno",
-    "bio": "Vývojář, nadšenec do technologií.",
+    "bio": "Technologický nadšenec, software & hardware.",
     "url": "/about",
     "github": "https://github.com/mojeprofil"
   },
@@ -122,10 +162,28 @@ Pro aktivaci vlastní konfigurace stačí zkopírovat soubor `server-content/sit
 
   "logo": {
     "text": "Moje Jméno",
-    "iconUrl": "/logos/logo-flat.svg",
-    "show3D": true,
-    "model3d": "/models/logo.glb",
-    "fallback3d": "/logos/logo-3d.png"
+    "iconUrl": "/logos/logo-flat.svg"
+  },
+
+  "logo3d": {
+    "enabled": true,
+    "showOnHome": true,
+    "showOnAbout": true,
+    "home": {
+      "model": "/models/logo.glb",
+      "fallbackImage": "/logos/logo-3d.png",
+      "size": 125
+    },
+    "about": {
+      "model": "",
+      "fallbackImage": "",
+      "size": 110
+    }
+  },
+
+  "about": {
+    "title": "O mně",
+    "description": "Představení, technologické zaměření, projekty a kontakt na mé jméno."
   },
 
   "favicon": {
@@ -152,8 +210,8 @@ Pro aktivaci vlastní konfigurace stačí zkopírovat soubor `server-content/sit
 
   "home": {
     "heroTitle": "Vítejte",
-    "heroLead": "Vítejte na mém osobním webu věnovaném moderním technologiím.",
-    "heroText": "Prohlédněte si nejnovější články níže nebo si přečtěte více o mně."
+    "heroLead": "Vítejte v mém osobním koutku webu.",
+    "heroText": "Můžete si projít nejnovější články níže nebo si přečíst více o mně."
   },
 
   "footer": {
@@ -162,5 +220,3 @@ Pro aktivaci vlastní konfigurace stačí zkopírovat soubor `server-content/sit
   }
 }
 ```
-
-> **Tip:** V `social` stačí nevyplněné sítě ponechat jako `""` (prázdný řetězec) nebo je vymazat – web pak danou ikonku vůbec nezobrazí.

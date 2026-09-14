@@ -65,12 +65,12 @@
 				<SocialLinks />
 			</div>
 		</div>
-		{#if siteConfig?.logo?.show3D !== false}
+		{#if siteConfig?.logo3d?.enabled !== false && siteConfig?.logo3d?.showOnHome !== false && siteConfig?.logo?.show3D !== false}
 			<div class="intro-logo-wrapper">
 				<Logo3D
-					size={125}
-					src={siteConfig?.logo?.model3d || '/models/logo.glb'}
-					fallbackSrc={siteConfig?.logo?.fallback3d || '/logos/logo-3d.png'}
+					size={siteConfig?.logo3d?.home?.size || 125}
+					src={siteConfig?.logo3d?.home?.model || siteConfig?.logo?.model3d || '/models/logo.glb'}
+					fallbackSrc={siteConfig?.logo3d?.home?.fallbackImage || siteConfig?.logo?.fallback3d || '/logos/logo-3d.png'}
 					alt="{siteTitle} 3D Logo"
 				/>
 			</div>

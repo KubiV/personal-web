@@ -23,13 +23,35 @@
   "logo": {
     "_comment_iconUrl": "Cesta k logu v hlavičce. Můžete nahrát vlastní logo do server-content/assets/logo.svg a zadat '/custom-assets/logo.svg'.",
     "text": "KubiV",
-    "iconUrl": "/logos/logo-flat.svg",
-    "show3D": true,
-    "model3d": "/models/logo.glb",
-    "fallback3d": "/logos/logo-3d.png"
+    "iconUrl": "/logos/logo-flat.svg"
+  },
+
+  "logo3d": {
+    "_comment": "Podrobné nastavení interaktivních 3D modelů pro hlavní stránku a sekci O mně.",
+    "enabled": true,
+    "showOnHome": true,
+    "showOnAbout": true,
+    "home": {
+      "model": "/models/logo.glb",
+      "fallbackImage": "/logos/logo-3d.png",
+      "size": 125
+    },
+    "about": {
+      "_comment": "Pokud model ponecháte prázdný (''), použije se výchozí model z home. Zde můžete zadat např. '/models/pandulak.obj' nebo vlastní model z '/custom-assets/...' ",
+      "model": "",
+      "fallbackImage": "",
+      "size": 110
+    }
+  },
+
+  "about": {
+    "_comment": "Nastavení profilové karty na stránce O mně (nadpis a perex / popisek)",
+    "title": "O mně",
+    "description": "Představení, technologické zaměření, projekty a kontakt na KubiV."
   },
 
   "favicon": {
+    "_comment": "Favikony stačí jednoduše nahrát do složky server-content/assets/ (jako favicon.svg, favicon.png nebo favicon.ico) a web je načte automaticky!",
     "svg": "/favicon.svg",
     "png": "/favicon.png",
     "appleTouchIcon": "/apple-touch-icon.png"

@@ -118,6 +118,21 @@ export function getSiteRuntimeData() {
 		const userConfig = JSON.parse(rawContent);
 
 		const merged = deepMerge(defaultSiteConfig, userConfig);
+
+		// Zpětná kompatibilita pro starší konfigurace s flat logo.show3D / model3d
+		if (userConfig?.logo) {
+			if (userConfig.logo.show3D !== undefined && (!userConfig.logo3d || userConfig.logo3d.enabled === undefined)) {
+				merged.logo3d.enabled = Boolean(userConfig.logo.show3D);
+				merged.logo3d.showOnHome = Boolean(userConfig.logo.show3D);
+			}
+			if (userConfig.logo.model3d && (!userConfig.logo3d || !userConfig.logo3d.home?.model)) {
+				merged.logo3d.home.model = userConfig.logo.model3d;
+			}
+			if (userConfig.logo.fallback3d && (!userConfig.logo3d || !userConfig.logo3d.home?.fallbackImage)) {
+				merged.logo3d.home.fallbackImage = userConfig.logo.fallback3d;
+			}
+		}
+
 		const accentColor = merged.theme?.accentColor || '#14A4FF';
 
 		cachedConfig = merged;

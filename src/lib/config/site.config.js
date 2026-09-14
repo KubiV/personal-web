@@ -33,23 +33,42 @@ export const defaultSiteConfig = {
 		accentColor: '#14A4FF'
 	},
 
-	// Nastavení loga a ikon
+	// Nastavení loga v hlavičce webu
 	logo: {
 		// Text zobrazený v hlavičce vedle loga
 		text: 'KubiV',
 
 		// Cesta k plochému logu (SVG nebo rastrový obrázek).
 		// Může odkazovat do /logos/logo-flat.svg nebo do /custom-assets/logo.svg
-		iconUrl: '/logos/logo-flat.svg',
+		iconUrl: '/logos/logo-flat.svg'
+	},
 
-		// Zda zobrazovat interaktivní 3D logo v úvodu hlavní stránky
-		show3D: true,
+	// Nastavení interaktivního 3D loga a modelů
+	logo3d: {
+		// Globální zapnutí / vypnutí 3D modelů na celém webu (true = zapnuto, false = vypnuto)
+		enabled: true,
 
-		// Cesta k 3D modelu (.glb nebo .obj)
-		model3d: '/models/logo.glb',
+		// Zda zobrazovat 3D model na hlavní stránce v úvodu (Home)
+		showOnHome: true,
 
-		// Náhradní 3D render (PNG) pro zařízení bez WebGL nebo během načítání
-		fallback3d: '/logos/logo-3d.png'
+		// Zda zobrazovat 3D model (např. panáčka) v sekci "O mně"
+		showOnAbout: true,
+
+		// Specifické nastavení pro hlavní stránku
+		home: {
+			model: '/models/logo.glb',
+			fallbackImage: '/logos/logo-3d.png',
+			size: 125
+		},
+
+		// Specifické nastavení pro sekci "O mně"
+		// Pokud model nebo fallbackImage ponecháte prázdné (""), použijí se automaticky hodnoty z home.
+		// Lze sem zadat např. "/models/pandulak.obj" nebo vlastní model ze server-content/assets/
+		about: {
+			model: '',
+			fallbackImage: '',
+			size: 110
+		}
 	},
 
 	// Favikony webu
@@ -85,6 +104,12 @@ export const defaultSiteConfig = {
 			'Vítejte v mém osobním koutku webu. Najdete zde články, poznámky a návody věnované moderním technologiím, softwarovému vývoji a zajímavým projektům.',
 		heroText:
 			'Můžete si projít nejnovější články níže, filtrovat podle témat v prohlížeči kategorií, nebo si přečíst více o mně.'
+	},
+
+	// Texty profilové karty v sekci "O mně"
+	about: {
+		title: 'O mně',
+		description: 'Představení, technologické zaměření, projekty a kontakt na KubiV.'
 	},
 
 	// Patička webu
