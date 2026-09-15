@@ -436,6 +436,14 @@ hr {
 	border-radius: 3px;
 }
 
+@media (max-width: 640px) {
+	.prose img[style*="float"] {
+		float: none !important;
+		margin: 1.5rem auto !important;
+		display: block !important;
+	}
+}
+
 .prose table {
 	width: 100%;
 	border-collapse: collapse;
