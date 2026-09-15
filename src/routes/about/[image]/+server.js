@@ -1,33 +1,26 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { error } from '@sveltejs/kit';
-import { getBlogPath, sanitizeSlug, findFileInDir, COMMON_MIME_TYPES } from '$lib/server/content.js';
+import { getAboutPath, findFileInDir, COMMON_MIME_TYPES } from '$lib/server/content.js';
 
 export async function GET({ params }) {
-	const { slug, image } = params;
-
-	// Validate slug
-	const validSlug = sanitizeSlug(slug);
-	if (!validSlug) {
-		throw error(404, 'Invalid article path');
-	}
+	const { image } = params;
 
 	// Validate filename against path traversal
 	if (!image || image.includes('..') || image.includes('/') || image.includes('\\') || image.includes('\0')) {
 		throw error(400, 'Invalid filename');
 	}
 
-	const blogDir = getBlogPath();
-	const articleDir = path.join(blogDir, validSlug);
-	const found = await findFileInDir(articleDir, image);
+	const aboutDir = getAboutPath();
+	const found = await findFileInDir(aboutDir, image);
 
 	if (!found) {
 		throw error(404, 'File not found');
 	}
 
-	// Strict containment check: ensure resolved path is inside the article directory
+	// Strict containment check: ensure resolved path is inside aboutDir
 	const resolvedPath = path.resolve(found.fullPath);
-	if (!resolvedPath.startsWith(path.resolve(articleDir))) {
+	if (!resolvedPath.startsWith(path.resolve(aboutDir))) {
 		throw error(403, 'Access denied');
 	}
 

@@ -53,6 +53,128 @@ export function slugifyCategory(text) {
 
 export const DEFAULT_AUTHOR = "KubiV";
 
+export const COMMON_MIME_TYPES = {
+	// Images
+	'.jpg': 'image/jpeg',
+	'.jpeg': 'image/jpeg',
+	'.png': 'image/png',
+	'.webp': 'image/webp',
+	'.gif': 'image/gif',
+	'.svg': 'image/svg+xml',
+	'.avif': 'image/avif',
+	'.ico': 'image/x-icon',
+	'.bmp': 'image/bmp',
+	// 3D Printing & CAD models
+	'.3mf': 'model/3mf',
+	'.stl': 'model/stl',
+	'.step': 'model/step',
+	'.stp': 'model/step',
+	'.gcode': 'text/x-gcode',
+	'.obj': 'text/plain',
+	'.mtl': 'text/plain',
+	'.glb': 'model/gltf-binary',
+	'.gltf': 'model/gltf+json',
+	// Code & Scripts
+	'.py': 'text/x-python',
+	'.sh': 'application/x-sh',
+	'.js': 'text/javascript',
+	'.json': 'application/json',
+	'.html': 'text/html',
+	'.css': 'text/css',
+	'.txt': 'text/plain; charset=utf-8',
+	'.md': 'text/markdown; charset=utf-8',
+	'.csv': 'text/csv',
+	// Archives & Documents
+	'.pdf': 'application/pdf',
+	'.zip': 'application/zip',
+	'.tar': 'application/x-tar',
+	'.gz': 'application/gzip',
+	'.7z': 'application/x-7z-compressed',
+	'.rar': 'application/vnd.rar'
+};
+
+/**
+ * Resilient file resolver for article / about directories.
+ * Handles:
+ * - Exact match
+ * - URL decoded match (%20, etc.)
+ * - Plus vs space normalization (e.g. logaritmicke+pravitko.3mf)
+ * - Case-insensitive match on Linux (e.g. profilephoto.JPEG vs profilephoto.jpeg)
+ * - Common image extension interchange (.jpg <-> .jpeg)
+ */
+export async function findFileInDir(dir, requestedName) {
+	if (!requestedName || !dir) return null;
+
+	// 1. Direct match
+	const directPath = path.join(dir, requestedName);
+	try {
+		const stat = await fs.promises.stat(directPath);
+		if (stat.isFile()) return { fullPath: directPath, filename: requestedName };
+	} catch {}
+
+	// 2. URL-decoded match
+	try {
+		const decoded = decodeURIComponent(requestedName);
+		if (decoded !== requestedName) {
+			const decPath = path.join(dir, decoded);
+			const stat = await fs.promises.stat(decPath);
+			if (stat.isFile()) return { fullPath: decPath, filename: decoded };
+		}
+	} catch {}
+
+	// 3. Plus replaced by space
+	const plusAsSpace = requestedName.replace(/\+/g, ' ');
+	if (plusAsSpace !== requestedName) {
+		const pPath = path.join(dir, plusAsSpace);
+		try {
+			const stat = await fs.promises.stat(pPath);
+			if (stat.isFile()) return { fullPath: pPath, filename: plusAsSpace };
+		} catch {}
+	}
+
+	// 4. Directory scan for case-insensitive and normalized matches
+	try {
+		const entries = await fs.promises.readdir(dir);
+		const targetLower = requestedName.toLowerCase();
+		let targetDecodedLower = targetLower;
+		try {
+			targetDecodedLower = decodeURIComponent(requestedName).toLowerCase();
+		} catch {}
+		const targetSpaceLower = plusAsSpace.toLowerCase();
+
+		for (const entry of entries) {
+			const entryLower = entry.toLowerCase();
+			if (
+				entryLower === targetLower ||
+				entryLower === targetDecodedLower ||
+				entryLower === targetSpaceLower ||
+				entryLower.replace(/\+/g, ' ') === targetSpaceLower
+			) {
+				const candidatePath = path.join(dir, entry);
+				const stat = await fs.promises.stat(candidatePath);
+				if (stat.isFile()) return { fullPath: candidatePath, filename: entry };
+			}
+		}
+
+		// 5. Image extension interchange (.jpg <-> .jpeg)
+		const ext = path.extname(requestedName).toLowerCase();
+		const base = path.basename(requestedName, ext).toLowerCase();
+		if (ext === '.jpg' || ext === '.jpeg') {
+			for (const entry of entries) {
+				const entryExt = path.extname(entry).toLowerCase();
+				const entryBase = path.basename(entry, entryExt).toLowerCase();
+				if ((entryExt === '.jpg' || entryExt === '.jpeg') && entryBase === base) {
+					const candidatePath = path.join(dir, entry);
+					const stat = await fs.promises.stat(candidatePath);
+					if (stat.isFile()) return { fullPath: candidatePath, filename: entry };
+				}
+			}
+		}
+	} catch {}
+
+	return null;
+}
+
 /**
  * Resolve author(s) from article frontmatter data.
  * Supports:
@@ -435,17 +557,45 @@ export async function getPostBySlug(slug, requestedLang = "cs") {
 			return null;
 		}
 
-		// Configure marked to rewrite relative image URLs
+		// Configure marked to rewrite relative image and file links
 		const renderer = new marked.Renderer();
 		const originalImageRenderer = renderer.image.bind(renderer);
 
 		renderer.image = function ({ href, title, text }) {
 			let finalHref = href;
-			if (href && !href.startsWith("http://") && !href.startsWith("https://") && !href.startsWith("/") && !href.startsWith("data:")) {
-				const cleanedHref = href.replace(/^\.\//, "");
-				finalHref = `/blog/${validSlug}/${cleanedHref}`;
+			if (href && !href.startsWith("http://") && !href.startsWith("https://") && !href.startsWith("data:")) {
+				if (!href.startsWith("/")) {
+					const cleanedHref = href.replace(/^\.\//, "");
+					finalHref = `/blog/${validSlug}/${cleanedHref}`;
+				} else if (!href.startsWith("/blog/") && !href.startsWith("/custom-assets/")) {
+					finalHref = `/blog/${validSlug}/${href.slice(1)}`;
+				}
 			}
 			return originalImageRenderer({ href: finalHref, title, text });
+		};
+
+		renderer.link = function (token) {
+			let href = token.href;
+			const isExternal = href && (href.startsWith("http://") || href.startsWith("https://"));
+			const isAnchor = href && href.startsWith("#");
+			const isSpecial = href && (href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("data:"));
+
+			if (href && !isExternal && !isAnchor && !isSpecial) {
+				if (!href.startsWith("/")) {
+					const cleanedHref = href.replace(/^\.\//, "");
+					href = `/blog/${validSlug}/${cleanedHref}`;
+				} else if (!href.startsWith("/blog/") && !href.startsWith("/custom-assets/") && !href.startsWith("/category")) {
+					href = `/blog/${validSlug}/${href.slice(1)}`;
+				}
+			}
+
+			const isDownloadable = /\.(3mf|stl|step|stp|gcode|zip|py|tar|gz|7z|rar|pdf|bin|csv|json|txt|md)$/i.test(href);
+			const text = this.parser.parseInline(token.tokens);
+			const titleAttr = token.title ? ` title="${token.title}"` : "";
+			const downloadAttr = isDownloadable ? " download" : "";
+			const targetAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : "";
+
+			return `<a href="${href}"${titleAttr}${downloadAttr}${targetAttr}>${text}</a>`;
 		};
 
 		const html = marked.parse(content, { renderer, gfm: true, breaks: false });
@@ -585,8 +735,48 @@ export async function getAboutContent(requestedLang = "cs") {
 
 	try {
 		const raw = await fs.promises.readFile(targetFile, "utf-8");
-		const { data, content } = matter(raw);
-		const html = marked.parse(content, { gfm: true, breaks: false });
+		// Configure marked to rewrite relative image and file URLs
+		const renderer = new marked.Renderer();
+		const originalImageRenderer = renderer.image.bind(renderer);
+
+		renderer.image = function ({ href, title, text }) {
+			let finalHref = href;
+			if (href && !href.startsWith("http://") && !href.startsWith("https://") && !href.startsWith("data:")) {
+				if (!href.startsWith("/")) {
+					const cleanedHref = href.replace(/^\.\//, "");
+					finalHref = `/about/${cleanedHref}`;
+				} else if (!href.startsWith("/about/") && !href.startsWith("/custom-assets/")) {
+					finalHref = `/about/${href.slice(1)}`;
+				}
+			}
+			return originalImageRenderer({ href: finalHref, title, text });
+		};
+
+		renderer.link = function (token) {
+			let href = token.href;
+			const isExternal = href && (href.startsWith("http://") || href.startsWith("https://"));
+			const isAnchor = href && href.startsWith("#");
+			const isSpecial = href && (href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("data:"));
+
+			if (href && !isExternal && !isAnchor && !isSpecial) {
+				if (!href.startsWith("/")) {
+					const cleanedHref = href.replace(/^\.\//, "");
+					href = `/about/${cleanedHref}`;
+				} else if (!href.startsWith("/about/") && !href.startsWith("/custom-assets/") && !href.startsWith("/blog") && !href.startsWith("/category")) {
+					href = `/about/${href.slice(1)}`;
+				}
+			}
+
+			const isDownloadable = /\.(3mf|stl|step|stp|gcode|zip|py|tar|gz|7z|rar|pdf|bin|csv|json|txt|md)$/i.test(href);
+			const text = this.parser.parseInline(token.tokens);
+			const titleAttr = token.title ? ` title="${token.title}"` : "";
+			const downloadAttr = isDownloadable ? " download" : "";
+			const targetAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : "";
+
+			return `<a href="${href}"${titleAttr}${downloadAttr}${targetAttr}>${text}</a>`;
+		};
+
+		const html = marked.parse(content, { renderer, gfm: true, breaks: false });
 
 		return {
 			title: data.title || (activeLang === "en" ? "About Me" : (activeLang === "fr" ? "À propos" : "O mně")),
