@@ -1,7 +1,9 @@
 <script>
 	import { page } from '$app/stores';
+	import { getPostCategories } from '$lib/utils.js';
 	export let data;
 	$: post = data.post;
+	$: postCategories = getPostCategories(post);
 
 	const langTitles = {
 		cs: 'Čeština (CZ)',
@@ -21,6 +23,13 @@
 		const code = (lang || '').toLowerCase();
 		return langTitles[code] || code.toUpperCase();
 	}
+
+	function getLangLabel(lang) {
+		const code = (lang || '').toLowerCase();
+		return code === 'cs' ? 'CZ' : code.toUpperCase();
+	}
+
+	$: availableLanguages = post?.availableLanguages || post?.languages || [];
 
 	$: siteConfig = data?.siteConfig;
 	$: siteTitle = siteConfig?.title || 'KubiV';
@@ -57,7 +66,7 @@
 			'@id': `${$page.url.origin}/blog/${post.slug}`
 		},
 		inLanguage: post.lang === 'cs' ? 'cs-CZ' : (post.lang === 'en' ? 'en-US' : post.lang),
-		articleSection: post.category
+		articleSection: postCategories.length > 0 ? postCategories.map((c) => c.name) : post.category
 	});
 </script>
 
@@ -71,7 +80,12 @@
 		<meta property="article:author" content={authorName} />
 	{/each}
 	<meta name="author" content={post.author || defaultAuthorName} />
-	{#if post.category}
+	{#if postCategories.length > 0}
+		{#each postCategories as cat}
+			<meta property="article:tag" content={cat.name} />
+		{/each}
+		<meta property="article:section" content={postCategories[0].name} />
+	{:else if post.category}
 		<meta property="article:section" content={post.category} />
 	{/if}
 	<meta name="twitter:title" content={post.title} />
@@ -103,26 +117,6 @@
 				&larr; {post.lang === 'en' ? 'Back to all articles' : 'Zpět na všechny články'}
 			</a>
 		</nav>
-
-		<!-- Dynamic Language Switcher -->
-		{#if post.availableLanguages && post.availableLanguages.length > 0}
-			<div class="lang-switcher" aria-label="Jazyková verze článku">
-				<span class="lang-label">{post.lang === 'en' ? 'Lang:' : (post.lang === 'fr' ? 'Langue:' : 'Jazyk:')}</span>
-				{#each post.availableLanguages as langCode}
-					<a
-						href="?lang={langCode}"
-						class="lang-btn"
-						class:active={post.lang === langCode}
-						aria-label={langCode.toUpperCase()}
-						title={getLangTitle(langCode)}
-					>
-						<span class="flag-text flag-{langCode.toLowerCase()}">
-							{langCode.toLowerCase() === 'cs' ? 'CZ' : langCode.toUpperCase()}
-						</span>
-					</a>
-				{/each}
-			</div>
-		{/if}
 	</div>
 
 	{#if post.isFallback}
@@ -135,10 +129,6 @@
 		<h1>{post.title}</h1>
 		<div class="post-meta">
 			<time datetime={post.date}>{post.dateFormatted}</time>
-			<span>&bull;</span>
-			<a href="/category/{post.categorySlug || encodeURIComponent(post.category.toLowerCase())}" class="category-link">
-				{post.category}
-			</a>
 			{#if post.author}
 				<span>&bull;</span>
 				<span class="post-author">
@@ -147,6 +137,42 @@
 					{:else}
 						{post.author}
 					{/if}
+				</span>
+			{/if}
+			{#if postCategories.length > 0}
+				<span>&bull;</span>
+				<span class="post-categories">
+					{#each postCategories as cat}
+						<a href="/category/{cat.slug}" class="category-link">
+							{cat.name}
+						</a>
+					{/each}
+				</span>
+			{/if}
+			{#if availableLanguages && availableLanguages.length > 0}
+				<span>&bull;</span>
+				<span class="lang-badges" aria-label="Dostupné jazyky">
+					{#each availableLanguages as langCode}
+						{#if availableLanguages.length > 1}
+							<a
+								href="?lang={langCode}"
+								class="lang-badge"
+								class:active={post.lang === langCode}
+								title={getLangTitle(langCode)}
+								aria-label={langCode.toUpperCase()}
+							>
+								<span class="flag-text flag-{langCode.toLowerCase()}">
+									{getLangLabel(langCode)}
+								</span>
+							</a>
+						{:else}
+							<span class="lang-badge" title={getLangTitle(langCode)}>
+								<span class="flag-text flag-{langCode.toLowerCase()}">
+									{getLangLabel(langCode)}
+								</span>
+							</span>
+						{/if}
+					{/each}
 				</span>
 			{/if}
 		</div>

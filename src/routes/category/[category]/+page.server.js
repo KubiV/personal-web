@@ -1,11 +1,18 @@
 import { getPostsByCategory, getAllCategories } from "$lib/server/content.js";
 
 export async function load({ params }) {
-	const category = decodeURIComponent(params.category);
+	const categoryParam = decodeURIComponent(params.category);
 	const [posts, allCategories] = await Promise.all([
-		getPostsByCategory(category),
+		getPostsByCategory(categoryParam),
 		getAllCategories()
 	]);
+
+	const matchedCat = allCategories.find(
+		(c) =>
+			c.slug === categoryParam.toLowerCase() ||
+			c.name.toLowerCase() === categoryParam.toLowerCase()
+	);
+	const category = matchedCat ? matchedCat.name : categoryParam;
 
 	return {
 		category,

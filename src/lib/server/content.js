@@ -3,8 +3,9 @@ import path from "node:path";
 import matter from "gray-matter";
 import { marked } from "marked";
 import { getContentPath, getSiteConfig } from "$lib/server/config.js";
+import { slugifyCategory } from "$lib/utils.js";
 
-export { getContentPath };
+export { getContentPath, slugifyCategory };
 
 /**
  * Get the path to the blog content directory.
@@ -33,22 +34,6 @@ export function sanitizeSlug(slug) {
 		return null;
 	}
 	return slug;
-}
-
-/**
- * Helper to generate a clean ASCII slug for category URLs.
- * Strips diacritics (e.g. Návody -> navody).
- */
-export function slugifyCategory(text) {
-	if (!text) return "general";
-	return text
-		.toString()
-		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.toLowerCase()
-		.trim()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "");
 }
 
 export const DEFAULT_AUTHOR = "KubiV";
@@ -158,11 +143,11 @@ export async function findFileInDir(dir, requestedName) {
 
 		// 5. Image extension interchange (.jpg <-> .jpeg)
 		const ext = path.extname(requestedName).toLowerCase();
-		const base = path.basename(requestedName, ext).toLowerCase();
+		const base = requestedName.slice(0, requestedName.length - ext.length).toLowerCase();
 		if (ext === '.jpg' || ext === '.jpeg') {
 			for (const entry of entries) {
 				const entryExt = path.extname(entry).toLowerCase();
-				const entryBase = path.basename(entry, entryExt).toLowerCase();
+				const entryBase = entry.slice(0, entry.length - entryExt.length).toLowerCase();
 				if ((entryExt === '.jpg' || entryExt === '.jpeg') && entryBase === base) {
 					const candidatePath = path.join(dir, entry);
 					const stat = await fs.promises.stat(candidatePath);
@@ -218,6 +203,72 @@ export function resolveAuthors(data) {
 		author: authorList.join(", ")
 	};
 }
+
+/**
+ * Normalizes categories from frontmatter data.
+ * Supports:
+ * - category: "Návody"
+ * - categories: ["Návody", "Web"]
+ * - categories: "Návody, Web"
+ * - category: "Návody, Web"
+ * - category: ["Návody", "Web"]
+ * Preserves order, deduplicates case-insensitively while keeping original casing.
+ * Falls back to "General".
+ */
+export function resolveCategories(data) {
+	if (!data) {
+		return {
+			category: "General",
+			categorySlug: slugifyCategory("General"),
+			categories: ["General"],
+			categoryItems: [{ name: "General", slug: slugifyCategory("General") }]
+		};
+	}
+
+	let list = [];
+
+	if (Array.isArray(data.categories)) {
+		list.push(...data.categories.flatMap((c) => (typeof c === "string" ? c.split(",") : [String(c)])));
+	} else if (typeof data.categories === "string" && data.categories.trim()) {
+		list.push(...data.categories.split(","));
+	}
+
+	if (Array.isArray(data.category)) {
+		list.push(...data.category.flatMap((c) => (typeof c === "string" ? c.split(",") : [String(c)])));
+	} else if (typeof data.category === "string" && data.category.trim()) {
+		list.push(...data.category.split(","));
+	}
+
+	const cleaned = list.map((c) => String(c).trim()).filter(Boolean);
+
+	const seen = new Set();
+	const uniqueCategories = [];
+	for (const cat of cleaned) {
+		const lower = cat.toLowerCase();
+		if (!seen.has(lower)) {
+			seen.add(lower);
+			uniqueCategories.push(cat);
+		}
+	}
+
+	if (uniqueCategories.length === 0) {
+		uniqueCategories.push("General");
+	}
+
+	const primaryCategory = uniqueCategories[0];
+	const categoryItems = uniqueCategories.map((c) => ({
+		name: c,
+		slug: slugifyCategory(c)
+	}));
+
+	return {
+		category: primaryCategory,
+		categorySlug: slugifyCategory(primaryCategory),
+		categories: uniqueCategories,
+		categoryItems
+	};
+}
+
 
 
 /**
@@ -460,15 +511,11 @@ export async function getAllPosts() {
 					continue;
 				}
 
-				// Normalize category
-				let category = data.category || (Array.isArray(data.categories) ? data.categories[0] : "General");
-				let categories = Array.isArray(data.categories)
-					? data.categories
-					: (data.category ? [data.category] : ["General"]);
-
+				// Normalize categories and authors
+				const postCategories = resolveCategories(data);
+				const postAuthors = resolveAuthors(data);
 				const postDate = data.date ? new Date(data.date) : new Date();
 				const thumbnail = resolveThumbnail(data, content, slug);
-				const postAuthors = resolveAuthors(data);
 
 				posts.push({
 					slug,
@@ -483,9 +530,10 @@ export async function getAllPosts() {
 					}),
 					author: postAuthors.author,
 					authors: postAuthors.authors,
-					category,
-					categorySlug: slugifyCategory(category),
-					categories,
+					category: postCategories.category,
+					categorySlug: postCategories.categorySlug,
+					categories: postCategories.categories,
+					categoryItems: postCategories.categoryItems,
 					description: data.description || data.excerpt || "",
 					draft: Boolean(data.draft),
 					languages,
@@ -603,10 +651,7 @@ export async function getPostBySlug(slug, requestedLang = "cs") {
 		const postDate = data.date ? new Date(data.date) : new Date();
 		const thumbnail = resolveThumbnail(data, content, validSlug);
 		const postAuthors = resolveAuthors(data);
-		let category = data.category || (Array.isArray(data.categories) ? data.categories[0] : "General");
-		let categories = Array.isArray(data.categories)
-			? data.categories
-			: (data.category ? [data.category] : ["General"]);
+		const postCategories = resolveCategories(data);
 
 		const localeMap = {
 			cs: "cs-CZ",
@@ -632,9 +677,10 @@ export async function getPostBySlug(slug, requestedLang = "cs") {
 			}),
 			author: postAuthors.author,
 			authors: postAuthors.authors,
-			category,
-			categorySlug: slugifyCategory(category),
-			categories,
+			category: postCategories.category,
+			categorySlug: postCategories.categorySlug,
+			categories: postCategories.categories,
+			categoryItems: postCategories.categoryItems,
 			description: data.description || data.excerpt || "",
 			html,
 			lang: activeLang,
@@ -735,6 +781,8 @@ export async function getAboutContent(requestedLang = "cs") {
 
 	try {
 		const raw = await fs.promises.readFile(targetFile, "utf-8");
+		const { data, content } = matter(raw);
+
 		// Configure marked to rewrite relative image and file URLs
 		const renderer = new marked.Renderer();
 		const originalImageRenderer = renderer.image.bind(renderer);

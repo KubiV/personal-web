@@ -50,7 +50,7 @@
 				<a
 					href="/category/{cat.slug}"
 					class="category-pill-link"
-					class:active={cat.name.toLowerCase() === currentCategoryLower}
+					class:active={cat.name.toLowerCase() === currentCategoryLower || cat.slug === data.category.toLowerCase()}
 				>
 					<span class="pill-name">{cat.name}</span>
 					<span class="pill-count">{cat.count}</span>

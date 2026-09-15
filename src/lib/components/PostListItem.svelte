@@ -1,4 +1,6 @@
 <script>
+	import { getPostCategories } from '$lib/utils.js';
+
 	export let post;
 	export let headingLevel = 'h2';
 	export let showCategory = true;
@@ -25,6 +27,8 @@
 		const code = (lang || '').toLowerCase();
 		return langNames[code] || code.toUpperCase();
 	}
+
+	$: postCategories = getPostCategories(post);
 </script>
 
 <li class="post-list-item" class:has-thumbnail={Boolean(post.image)}>
@@ -40,20 +44,25 @@
 		{/if}
 		<div class="post-meta">
 			<time datetime={post.date}>{post.dateFormatted}</time>
-			{#if showCategory && post.category}
-				<span>&bull;</span>
-				<a
-					href="/category/{post.categorySlug || encodeURIComponent(post.category.toLowerCase())}"
-					class="category-link"
-				>
-					{post.category}
-				</a>
-			{/if}
 			{#if post.author}
 				<span>&bull;</span>
 				<span class="post-author">{post.author}</span>
 			{/if}
+			{#if showCategory && postCategories.length > 0}
+				<span>&bull;</span>
+				<span class="post-categories">
+					{#each postCategories as cat}
+						<a
+							href="/category/{cat.slug}"
+							class="category-link"
+						>
+							{cat.name}
+						</a>
+					{/each}
+				</span>
+			{/if}
 			{#if post.languages && post.languages.length > 0}
+				<span>&bull;</span>
 				<span class="lang-badges" aria-label="Dostupné jazyky">
 					{#each post.languages as l}
 						<span class="lang-badge" title={getLangTitle(l)}>

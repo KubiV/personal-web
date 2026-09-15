@@ -257,6 +257,13 @@ hr {
 	gap: 0.5rem;
 }
 
+.post-categories {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem;
+}
+
 .post-meta .category-link {
 	color: var(--text);
 	background-color: var(--code-bg);
@@ -698,11 +705,32 @@ hr {
 	border: 1px solid var(--border);
 	line-height: 1.25;
 	user-select: none;
-	transition: border-color 0.15s ease;
+	transition: all 0.15s ease;
 }
 
 .lang-badge:hover {
 	border-color: var(--accent-border);
+}
+
+a.lang-badge {
+	text-decoration: none;
+	color: inherit;
+	cursor: pointer;
+}
+
+a.lang-badge:hover {
+	border-color: var(--accent);
+	transform: translateY(-1px);
+}
+
+a.lang-badge.active {
+	background: var(--accent-light);
+	border-color: var(--accent);
+	box-shadow: 0 0 8px rgba(20, 164, 255, 0.25);
+}
+
+.post-meta .lang-badges {
+	margin-left: 0;
 }
 
 /* Flag text cutout using background-clip: text */
