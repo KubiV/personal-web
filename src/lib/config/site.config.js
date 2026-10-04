@@ -43,7 +43,7 @@ export const defaultSiteConfig = {
 		iconUrl: '/logos/logo-flat.svg'
 	},
 
-	// Nastavení interaktivního 3D loga a modelů
+	// Nastavení interaktivního 3D loga a modelů (podporuje .glb, .gltf, .obj, .stl)
 	logo3d: {
 		// Globální zapnutí / vypnutí 3D modelů na celém webu (true = zapnuto, false = vypnuto)
 		enabled: true,
@@ -56,16 +56,38 @@ export const defaultSiteConfig = {
 
 		// Specifické nastavení pro hlavní stránku
 		home: {
-			model: '/models/logo.glb',
+			// Cesta k modelu: např. '/models/logo.obj' (v repozitáři) nebo '/custom-assets/logo.obj' (z nahraných v server-content/assets/)
+			model: '/models/logo.obj',
+			// Volitelná obrázková textura (PNG, JPG, WebP)
+			texture: '',
+			// Volitelný materiálový soubor pro OBJ (.mtl)
+			material: '',
+			// Volitelná barva modelu (HEX např. '#0095f8'), pokud model nemá vlastní texturu/materiál
+			color: '',
+			// Kovovost PBR materiálu (0.0 až 1.0)
+			metalness: 0.50,
+			// Drsnost PBR materiálu (0.0 až 1.0)
+			roughness: 0.36,
+			// Výchozí natočení ve stupních { x, y, z }
+			rotation: { x: 0, y: 0, z: 0 },
+			// Měřítko modelu (výchozí 1)
+			scale: 1,
 			fallbackImage: '/logos/logo-3d.png',
 			size: 125
 		},
 
 		// Specifické nastavení pro sekci "O mně"
 		// Pokud model nebo fallbackImage ponecháte prázdné (""), použijí se automaticky hodnoty z home.
-		// Lze sem zadat např. "/models/pandulak.obj" nebo vlastní model ze server-content/assets/
+		// Lze sem zadat např. "/models/pandulak.obj" nebo vlastní model ze server-content/assets/ (přes '/custom-assets/...')
 		about: {
 			model: '',
+			texture: '',
+			material: '',
+			color: '',
+			metalness: 0.50,
+			roughness: 0.36,
+			rotation: { x: 0, y: 0, z: 0 },
+			scale: 1,
 			fallbackImage: '',
 			size: 110
 		}

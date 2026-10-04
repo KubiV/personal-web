@@ -27,18 +27,36 @@
   },
 
   "logo3d": {
-    "_comment": "Podrobné nastavení interaktivních 3D modelů pro hlavní stránku a sekci O mně.",
+    "_comment": "Podrobné nastavení interaktivních 3D modelů pro hlavní stránku a sekci O mně. Podporované formáty: .glb, .gltf, .obj, .stl. Vlastní soubory doporučujeme nahrát do 'server-content/assets/' a odkazovat přes '/custom-assets/...'.",
     "enabled": true,
     "showOnHome": true,
     "showOnAbout": true,
     "home": {
-      "model": "/models/logo.glb",
+      "_comment_model": "Cesta k modelu: např. '/models/logo.obj', '/custom-assets/logo.obj' nebo '/custom-assets/logo.stl'",
+      "model": "/models/logo.obj",
+      "_comment_texture": "Volitelná obrázková textura (PNG, JPG, WebP) pro STL, OBJ i GLB, např. '/custom-assets/logo-texture.png'",
+      "texture": "",
+      "_comment_material": "Volitelný materiálový soubor pro OBJ (.mtl), např. '/custom-assets/logo.mtl'",
+      "material": "",
+      "_comment_color": "Volitelná barva materiálu (HEX kód např. '#0095f8'), pokud model nemá vlastní texturu",
+      "color": "",
+      "metalness": 0.50,
+      "roughness": 0.36,
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "scale": 1,
       "fallbackImage": "/logos/logo-3d.png",
       "size": 125
     },
     "about": {
       "_comment": "Pokud model ponecháte prázdný (''), použije se výchozí model z home. Zde můžete zadat např. '/models/pandulak.obj' nebo vlastní model z '/custom-assets/...' ",
       "model": "",
+      "texture": "",
+      "material": "",
+      "color": "",
+      "metalness": 0.50,
+      "roughness": 0.36,
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "scale": 1,
       "fallbackImage": "",
       "size": 110
     }

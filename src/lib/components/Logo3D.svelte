@@ -2,10 +2,35 @@
 	import { onMount, onDestroy } from 'svelte';
 
 	/**
-	 * Cesta k 3D modelu (standardně .glb nebo .obj)
-	 * Pokud soubor neexistuje, automaticky se zkusí druhá přípona (.obj / .glb).
+	 * Cesta k 3D modelu (.glb, .gltf, .obj, .stl)
+	 * Pokud soubor neexistuje, automaticky se zkusí alternativní formáty.
 	 */
 	export let src = '/models/logo.glb';
+
+	/**
+	 * Volitelná cesta k obrázkové textuře (PNG, JPG, WebP) pro OBJ, STL i GLB
+	 */
+	export let texture = null;
+
+	/**
+	 * Volitelná cesta k materiálovému souboru (.mtl) pro OBJ
+	 */
+	export let material = null;
+
+	/**
+	 * Volitelná barva modelu (HEX kód např. '#0095f8' nebo název)
+	 */
+	export let color = null;
+
+	/**
+	 * Kovovost PBR materiálu (0.0 až 1.0, výchozí 0.50)
+	 */
+	export let metalness = 0.50;
+
+	/**
+	 * Drsnost PBR materiálu (0.0 až 1.0, výchozí 0.36)
+	 */
+	export let roughness = 0.36;
 
 	/**
 	 * Cesta k záložnímu obrázku při načítání nebo selhání WebGL
@@ -81,11 +106,12 @@
 		const isDebugMode = debug || (typeof window !== 'undefined' && window.location.search.includes('debug3d=1'));
 
 		// Dynamický import Three.js pouze v prohlížeči (zaručuje 0 vliv na SSR a rychlé LCP)
-		const [THREE, { GLTFLoader }, { OBJLoader }, { MTLLoader }] = await Promise.all([
+		const [THREE, { GLTFLoader }, { OBJLoader }, { MTLLoader }, { STLLoader }] = await Promise.all([
 			import('three'),
 			import('three/examples/jsm/loaders/GLTFLoader.js'),
 			import('three/examples/jsm/loaders/OBJLoader.js'),
-			import('three/examples/jsm/loaders/MTLLoader.js')
+			import('three/examples/jsm/loaders/MTLLoader.js'),
+			import('three/examples/jsm/loaders/STLLoader.js')
 		]);
 
 		if (!canvasEl) return;
@@ -142,30 +168,108 @@
 		targetRot = { ...initRotRad };
 		modelGroup.rotation.set(currentRot.x, currentRot.y, currentRot.z);
 
-		// Výchozí anodizovaný PBR materiál pro OBJ bez materiálů (odpovídá reálnému modrému 3D renderu)
-		const defaultMascotMaterial = new THREE.MeshStandardMaterial({
-			color: 0x0095f8,
-			metalness: 0.50,
-			roughness: 0.36
-		});
-
-		function setupLoadedObject(object3D, applyMaterialIfMissing = true) {
-			object3D.traverse((child) => {
-				if (child.isMesh) {
-					if (child.geometry && !child.geometry.attributes.normal) {
-						child.geometry.computeVertexNormals();
-					}
-					// Aplikace nebo vylepšení na věrný PBR standardní materiál
-					const baseColor = (child.material && child.material.color)
-						? child.material.color.clone()
-						: new THREE.Color(0x0095f8);
-
-					child.material = new THREE.MeshStandardMaterial({
-						color: baseColor,
-						metalness: 0.50,
-						roughness: 0.36
-					});
+		// Načtení volitelné obrázkové textury (PNG, JPG, WebP)
+		let loadedTexture = null;
+		if (texture && typeof texture === 'string' && texture.trim()) {
+			try {
+				const textureLoader = new THREE.TextureLoader();
+				loadedTexture = await new Promise((resolve, reject) => {
+					textureLoader.load(
+						texture.trim(),
+						(tex) => {
+							tex.colorSpace = THREE.SRGBColorSpace;
+							resolve(tex);
+						},
+						undefined,
+						reject
+					);
+				});
+				if (isDebugMode) {
+					console.log(`[Logo3D] Textura '${texture.trim()}' úspěšně načtena.`);
 				}
+			} catch (err) {
+				if (isDebugMode) {
+					console.warn('[Logo3D] Chyba při načítání textury:', texture, err);
+				}
+			}
+		}
+
+		// Pomocná funkce pro doplnění UV souřadnic (např. u STL formátu, který nemá UV v souboru)
+		function ensureUvCoordinates(geometry) {
+			if (!geometry || (geometry.attributes && geometry.attributes.uv)) return;
+			geometry.computeBoundingBox();
+			const bbox = geometry.boundingBox;
+			if (!bbox) return;
+
+			const sizeVec = new THREE.Vector3();
+			bbox.getSize(sizeVec);
+			const pos = geometry.attributes.position;
+			if (!pos) return;
+
+			const count = pos.count;
+			const uvs = new Float32Array(count * 2);
+
+			const rangeX = sizeVec.x > 0 ? sizeVec.x : 1;
+			const rangeY = sizeVec.y > 0 ? sizeVec.y : (sizeVec.z > 0 ? sizeVec.z : 1);
+
+			for (let i = 0; i < count; i++) {
+				const x = pos.getX(i);
+				const y = sizeVec.y > 0 ? pos.getY(i) : pos.getZ(i);
+				uvs[i * 2] = (x - bbox.min.x) / rangeX;
+				uvs[i * 2 + 1] = (y - bbox.min.y) / rangeY;
+			}
+
+			geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+		}
+
+		// Aplikace PBR standardního materiálu s ohledem na načtené textury a konfiguraci
+		function applyPbrToMesh(child, hasLoadedMaterial = false) {
+			if (!child.isMesh) return;
+			if (child.geometry && !child.geometry.attributes.normal) {
+				child.geometry.computeVertexNormals();
+			}
+
+			if (loadedTexture) {
+				ensureUvCoordinates(child.geometry);
+			}
+
+			const existingMat = child.material;
+			const mapToUse = loadedTexture || (existingMat ? existingMat.map : null);
+
+			// Ponechat plnohodnotný GLTF PBR materiál, pokud nebyla explicitně zadána textura ani barva
+			if (hasLoadedMaterial && existingMat && existingMat.isMeshStandardMaterial && !loadedTexture && !color) {
+				return;
+			}
+
+			const effectiveMetalness = typeof metalness === 'number' ? metalness : 0.50;
+			const effectiveRoughness = typeof roughness === 'number' ? roughness : 0.36;
+
+			let baseColor;
+			if (color && typeof color === 'string' && color.trim()) {
+				baseColor = new THREE.Color(color.trim());
+			} else if (mapToUse && !existingMat?.color) {
+				baseColor = new THREE.Color(0xffffff);
+			} else if (existingMat && existingMat.color) {
+				baseColor = existingMat.color.clone();
+			} else {
+				baseColor = new THREE.Color(0x0095f8);
+			}
+
+			child.material = new THREE.MeshStandardMaterial({
+				color: mapToUse && (!color || !color.trim()) ? new THREE.Color(0xffffff) : baseColor,
+				map: mapToUse || null,
+				normalMap: existingMat?.normalMap || null,
+				bumpMap: existingMat?.bumpMap || null,
+				metalness: effectiveMetalness,
+				roughness: effectiveRoughness,
+				transparent: existingMat ? Boolean(existingMat.transparent || (mapToUse && mapToUse.format === THREE.RGBAFormat)) : false,
+				opacity: existingMat?.opacity !== undefined ? existingMat.opacity : 1
+			});
+		}
+
+		function setupLoadedObject(object3D, hasLoadedMaterial = true) {
+			object3D.traverse((child) => {
+				applyPbrToMesh(child, hasLoadedMaterial);
 			});
 
 			const boxBefore = new THREE.Box3().setFromObject(object3D);
@@ -195,19 +299,76 @@
 			modelGroup.add(pivot);
 		}
 
-		// Pomocná funkce pro načtení OBJ modelu (s volitelným MTL)
+		// Pomocná funkce pro načtení STL modelu
+		function loadStlModel(stlPath) {
+			return new Promise((resolve, reject) => {
+				const stlLoader = new STLLoader();
+				stlLoader.load(
+					stlPath,
+					(geometry) => {
+						if (!geometry.attributes.normal) {
+							geometry.computeVertexNormals();
+						}
+						ensureUvCoordinates(geometry);
+
+						const effectiveMetalness = typeof metalness === 'number' ? metalness : 0.50;
+						const effectiveRoughness = typeof roughness === 'number' ? roughness : 0.36;
+
+						let baseColor;
+						if (color && typeof color === 'string' && color.trim()) {
+							baseColor = new THREE.Color(color.trim());
+						} else if (loadedTexture) {
+							baseColor = new THREE.Color(0xffffff);
+						} else {
+							baseColor = new THREE.Color(0x0095f8);
+						}
+
+						const mat = new THREE.MeshStandardMaterial({
+							color: baseColor,
+							map: loadedTexture || null,
+							metalness: effectiveMetalness,
+							roughness: effectiveRoughness
+						});
+
+						const mesh = new THREE.Mesh(geometry, mat);
+						setupLoadedObject(mesh, true);
+						resolve(mesh);
+					},
+					undefined,
+					reject
+				);
+			});
+		}
+
+		// Pomocná funkce pro načtení OBJ modelu (s volitelným MTL a texturami)
 		async function loadObjModel(objPath) {
-			const mtlPath = objPath.replace(/\.obj$/i, '.mtl');
+			const mtlPath = (material && typeof material === 'string' && material.trim())
+				? material.trim()
+				: objPath.replace(/\.obj$/i, '.mtl');
+
 			let materials = null;
 
 			try {
 				const mtlLoader = new MTLLoader();
-				materials = await new Promise((resolve, reject) => {
-					mtlLoader.load(mtlPath, resolve, undefined, reject);
-				});
-				materials.preload();
-			} catch (_) {
-				// MTL soubor není povinný, použije se náš PBR materiál
+				const lastSlash = mtlPath.lastIndexOf('/');
+				if (lastSlash !== -1) {
+					const baseDir = mtlPath.substring(0, lastSlash + 1);
+					const fileName = mtlPath.substring(lastSlash + 1);
+					mtlLoader.setPath(baseDir);
+					mtlLoader.setResourcePath(baseDir);
+					materials = await new Promise((resolve, reject) => {
+						mtlLoader.load(fileName, resolve, undefined, reject);
+					});
+				} else {
+					materials = await new Promise((resolve, reject) => {
+						mtlLoader.load(mtlPath, resolve, undefined, reject);
+					});
+				}
+				if (materials) materials.preload();
+			} catch (err) {
+				if (material && isDebugMode) {
+					console.warn('[Logo3D] Zadaný MTL soubor se nepodařilo načíst:', mtlPath, err);
+				}
 			}
 
 			return new Promise((resolve, reject) => {
@@ -218,7 +379,7 @@
 				objLoader.load(
 					objPath,
 					(obj) => {
-						setupLoadedObject(obj, !materials);
+						setupLoadedObject(obj, Boolean(materials));
 						resolve(obj);
 					},
 					undefined,
@@ -234,7 +395,7 @@
 				gltfLoader.load(
 					gltfPath,
 					(gltf) => {
-						setupLoadedObject(gltf.scene, false);
+						setupLoadedObject(gltf.scene, true);
 						resolve(gltf.scene);
 					},
 					undefined,
@@ -243,28 +404,43 @@
 			});
 		}
 
-		// 4. Inteligentní načítání modelu (.glb / .obj s automatickým fallbackem)
+		// 4. Inteligentní načítání modelu (.glb / .gltf / .obj / .stl s automatickým fallbackem)
 		async function load3DAsset() {
-			const isObj = src.toLowerCase().endsWith('.obj');
-			const isGlb = src.toLowerCase().endsWith('.glb') || src.toLowerCase().endsWith('.gltf');
+			const cleanSrc = (src || '').trim();
+			const isObj = cleanSrc.toLowerCase().endsWith('.obj');
+			const isStl = cleanSrc.toLowerCase().endsWith('.stl');
+			const isGlb = cleanSrc.toLowerCase().endsWith('.glb') || cleanSrc.toLowerCase().endsWith('.gltf');
 
 			// Určení pořadí zkoušení podle zadaného src
 			const attempts = [];
 			if (isObj) {
-				attempts.push({ type: 'obj', path: src });
-				attempts.push({ type: 'glb', path: src.replace(/\.obj$/i, '.glb') });
+				attempts.push({ type: 'obj', path: cleanSrc });
+				attempts.push({ type: 'stl', path: cleanSrc.replace(/\.obj$/i, '.stl') });
+				attempts.push({ type: 'glb', path: cleanSrc.replace(/\.obj$/i, '.glb') });
+			} else if (isStl) {
+				attempts.push({ type: 'stl', path: cleanSrc });
+				attempts.push({ type: 'obj', path: cleanSrc.replace(/\.stl$/i, '.obj') });
+				attempts.push({ type: 'glb', path: cleanSrc.replace(/\.stl$/i, '.glb') });
 			} else if (isGlb) {
-				attempts.push({ type: 'glb', path: src });
-				attempts.push({ type: 'obj', path: src.replace(/\.(glb|gltf)$/i, '.obj') });
+				attempts.push({ type: 'glb', path: cleanSrc });
+				attempts.push({ type: 'obj', path: cleanSrc.replace(/\.(glb|gltf)$/i, '.obj') });
+				attempts.push({ type: 'stl', path: cleanSrc.replace(/\.(glb|gltf)$/i, '.stl') });
+			} else if (cleanSrc) {
+				attempts.push({ type: 'obj', path: cleanSrc });
+				attempts.push({ type: 'glb', path: cleanSrc });
+				attempts.push({ type: 'stl', path: cleanSrc });
 			} else {
-				attempts.push({ type: 'glb', path: '/models/logo.glb' });
 				attempts.push({ type: 'obj', path: '/models/logo.obj' });
+				attempts.push({ type: 'glb', path: '/models/logo.glb' });
+				attempts.push({ type: 'stl', path: '/models/logo.stl' });
 			}
 
 			for (const attempt of attempts) {
 				try {
 					if (attempt.type === 'obj') {
 						await loadObjModel(attempt.path);
+					} else if (attempt.type === 'stl') {
+						await loadStlModel(attempt.path);
 					} else {
 						await loadGltfModel(attempt.path);
 					}
@@ -275,14 +451,14 @@
 					return;
 				} catch (err) {
 					if (isDebugMode) {
-						console.info(`[Logo3D] Model '${attempt.path}' nebyl nalezen nebo se nenačetl.`);
+						console.info(`[Logo3D] Model '${attempt.path}' nebyl nalezen nebo se nenačetl.`, err);
 					}
 				}
 			}
 
-			// Pokud žádný 3D soubor v models/ zatím není, komponenta ponechá zobrazený fallbackSrc (/logos/logo-3d.png)
+			// Pokud žádný 3D soubor nebyl nalezen, komponenta ponechá zobrazený fallbackSrc
 			if (isDebugMode) {
-				console.info('[Logo3D] Žádný 3D model nenalezen v static/models/. Zobrazuji statický render.');
+				console.info('[Logo3D] Žádný 3D model se nepodařilo načíst. Zobrazuji statický render.');
 			}
 		}
 

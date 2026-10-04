@@ -17,6 +17,7 @@ const MIME_TYPES = {
 	'.gltf': 'model/gltf+json',
 	'.obj': 'text/plain',
 	'.mtl': 'text/plain',
+	'.stl': 'model/stl',
 	'.bin': 'application/octet-stream',
 	'.woff2': 'font/woff2',
 	'.woff': 'font/woff',

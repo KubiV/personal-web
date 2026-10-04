@@ -69,7 +69,14 @@
 			<div class="intro-logo-wrapper">
 				<Logo3D
 					size={siteConfig?.logo3d?.home?.size || 125}
-					src={siteConfig?.logo3d?.home?.model || siteConfig?.logo?.model3d || '/models/logo.glb'}
+					src={siteConfig?.logo3d?.home?.model || siteConfig?.logo?.model3d || '/models/logo.obj'}
+					texture={siteConfig?.logo3d?.home?.texture}
+					material={siteConfig?.logo3d?.home?.material}
+					color={siteConfig?.logo3d?.home?.color}
+					metalness={siteConfig?.logo3d?.home?.metalness}
+					roughness={siteConfig?.logo3d?.home?.roughness}
+					initialRotation={siteConfig?.logo3d?.home?.rotation || siteConfig?.logo3d?.home?.initialRotation || { x: 0, y: 0, z: 0 }}
+					scale={siteConfig?.logo3d?.home?.scale ?? 1}
 					fallbackSrc={siteConfig?.logo3d?.home?.fallbackImage || siteConfig?.logo?.fallback3d || '/logos/logo-3d.png'}
 					alt="{siteTitle} 3D Logo"
 				/>

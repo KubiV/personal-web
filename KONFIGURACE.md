@@ -88,7 +88,9 @@ Není potřeba nic měnit v kódu ani spouštět build!
 
 ## 🧊 Nastavení 3D loga a modelů (`logo3d`)
 
-3D model lze velmi přehledně a granulárně nastavit zvlášť pro hlavní stránku a zvlášť pro sekci "O mně":
+3D model lze velmi přehledně a granulárně nastavit zvlášť pro hlavní stránku a zvlášť pro sekci "O mně".
+
+Web nativně podporuje formáty **GLB / GLTF**, **Wavefront OBJ** a **STL** (včetně textur, materiálů a přesné kalibrace úhlů a měřítka):
 
 ```json
 {
@@ -97,12 +99,26 @@ Není potřeba nic měnit v kódu ani spouštět build!
     "showOnHome": true,
     "showOnAbout": true,
     "home": {
-      "model": "/models/logo.glb",
+      "model": "/models/logo.obj",
+      "texture": "",
+      "material": "",
+      "color": "",
+      "metalness": 0.50,
+      "roughness": 0.36,
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "scale": 1,
       "fallbackImage": "/logos/logo-3d.png",
       "size": 125
     },
     "about": {
       "model": "/models/pandulak.obj",
+      "texture": "",
+      "material": "",
+      "color": "",
+      "metalness": 0.50,
+      "roughness": 0.36,
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "scale": 1,
       "fallbackImage": "/logos/logo-3d.png",
       "size": 110
     }
@@ -110,13 +126,32 @@ Není potřeba nic měnit v kódu ani spouštět build!
 }
 ```
 
-### Možnosti:
+### Podporované formáty a umístění souborů:
+- **Kde soubory umístit (DOPORUČENO PRO PRODUKCI):**
+  - Nahrajte model a případné textury do složky `server-content/assets/` *(např. přetažením ve Filebrowser CMS)*.
+  - Všechny soubory jsou okamžitě dostupné na adrese `/custom-assets/<nazev-souboru>`:
+    ```json
+    "model": "/custom-assets/logo.obj",
+    "material": "/custom-assets/logo.mtl",
+    "texture": "/custom-assets/logo-textura.png"
+    ```
+  - **Tato složka je perzistentní a žádný `git pull` ani aktualizace kontejneru ji nepřepíše!**
+- **Alternativní umístění v repozitáři:**
+  - Složka `static/models/` (přístupná jako `/models/<nazev-souboru>`).
+
+### Možnosti nastavení:
 - **`enabled`** (`true` / `false`): Globální vypínač. Pokud nastavíte `false`, 3D se nezobrazí nikde.
 - **`showOnHome`** (`true` / `false`): Zda zobrazovat 3D logo v úvodní sekci na hlavní stránce.
 - **`showOnAbout`** (`true` / `false`): Zda zobrazovat 3D model (např. panáčka) v profilové kartě v sekci "O mně". Pokud je `false`, karta "O mně" je čistě textová a text přirozeně využije celou šířku.
-- **`home.model`**: Cesta k 3D modelu na hlavní stránce (`.glb` nebo `.obj`). Může být `/models/logo.glb` nebo váš vlastní model z `/custom-assets/muj-model.glb`.
-- **`about.model`**: Cesta k 3D modelu pro sekci O mně. Pokud ponecháte prázdné (`""`), použije se stejný model jako na hlavní stránce. Pokud chcete v sekci O mně postavičku/panáčka, zadejte např. `"/models/pandulak.obj"` nebo model nahraný do `server-content/assets/`.
-- **`home.size`** a **`about.size`**: Velikost 3D plátna v pixelech.
+- **`model`**: Cesta k 3D modelu (`.glb`, `.gltf`, `.obj` nebo `.stl`). Např. `"/custom-assets/moje-logo.obj"`.
+- **`texture`**: Volitelná cesta k obrázkové textuře (PNG, JPG, WebP) pro OBJ, STL i GLB (např. `"/custom-assets/textura.png"`). U formátu STL web automaticky dogeneruje UV mapování.
+- **`material`**: Volitelná cesta k souboru materiálů `.mtl` pro OBJ (např. `"/custom-assets/logo.mtl"`). Pokud není zadáno, web u OBJ automaticky zkusí soubor se stejným názvem a příponou `.mtl`.
+- **`color`**: Volitelná barva modelu v HEX formátu (např. `"#0095f8"` nebo `"#14A4FF"`), pokud model nemá vlastní texturu.
+- **`metalness`** a **`roughness`**: PBR vlastnosti povrchu (od 0.0 do 1.0, výchozí `0.50` a `0.36`).
+- **`rotation`**: Výchozí natočení modelu ve stupních `{ "x": 0, "y": 0, "z": 0 }`. Není třeba sahat do kódu.
+- **`scale`**: Měřítko modelu (výchozí `1`).
+- **`fallbackImage`**: Obrázek zobrazený při načítání, vypnutém WebGL nebo při chybějícím modelu.
+- **`size`**: Velikost 3D plátna v pixelech.
 
 ---
 
@@ -170,12 +205,26 @@ Zkopírujte `site.config.example.json` do `server-content/site.json` a upravte p
     "showOnHome": true,
     "showOnAbout": true,
     "home": {
-      "model": "/models/logo.glb",
+      "model": "/models/logo.obj",
+      "texture": "",
+      "material": "",
+      "color": "",
+      "metalness": 0.50,
+      "roughness": 0.36,
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "scale": 1,
       "fallbackImage": "/logos/logo-3d.png",
       "size": 125
     },
     "about": {
       "model": "",
+      "texture": "",
+      "material": "",
+      "color": "",
+      "metalness": 0.50,
+      "roughness": 0.36,
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "scale": 1,
       "fallbackImage": "",
       "size": 110
     }
