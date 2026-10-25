@@ -128,12 +128,12 @@ Web nativně podporuje formáty **GLB / GLTF**, **Wavefront OBJ** a **STL** (vč
 
 ### Podporované formáty a umístění souborů:
 - **Kde soubory umístit (DOPORUČENO PRO PRODUKCI):**
-  - Nahrajte model a případné textury do složky `server-content/assets/` *(např. přetažením ve Filebrowser CMS)*.
-  - Všechny soubory jsou okamžitě dostupné na adrese `/custom-assets/<nazev-souboru>`:
+  - Nahrajte loga, modely a případné textury do složky `server-content/assets/` *(např. přetažením ve Filebrowser CMS do složky `assets`)*.
+  - Všechny soubory jsou okamžitě dostupné na adrese `/assets/<nazev-souboru>` *(ze zpětné kompatibility funguje i `/custom-assets/<nazev-souboru>`)*:
     ```json
-    "model": "/custom-assets/logo.obj",
-    "material": "/custom-assets/logo.mtl",
-    "texture": "/custom-assets/logo-textura.png"
+    "model": "/assets/logo.obj",
+    "material": "/assets/logo.mtl",
+    "texture": "/assets/logo-textura.png"
     ```
   - **Tato složka je perzistentní a žádný `git pull` ani aktualizace kontejneru ji nepřepíše!**
 - **Alternativní umístění v repozitáři:**
@@ -143,9 +143,9 @@ Web nativně podporuje formáty **GLB / GLTF**, **Wavefront OBJ** a **STL** (vč
 - **`enabled`** (`true` / `false`): Globální vypínač. Pokud nastavíte `false`, 3D se nezobrazí nikde.
 - **`showOnHome`** (`true` / `false`): Zda zobrazovat 3D logo v úvodní sekci na hlavní stránce.
 - **`showOnAbout`** (`true` / `false`): Zda zobrazovat 3D model (např. panáčka) v profilové kartě v sekci "O mně". Pokud je `false`, karta "O mně" je čistě textová a text přirozeně využije celou šířku.
-- **`model`**: Cesta k 3D modelu (`.glb`, `.gltf`, `.obj` nebo `.stl`). Např. `"/custom-assets/moje-logo.obj"`.
-- **`texture`**: Volitelná cesta k obrázkové textuře (PNG, JPG, WebP) pro OBJ, STL i GLB (např. `"/custom-assets/textura.png"`). U formátu STL web automaticky dogeneruje UV mapování.
-- **`material`**: Volitelná cesta k souboru materiálů `.mtl` pro OBJ (např. `"/custom-assets/logo.mtl"`). Pokud není zadáno, web u OBJ automaticky zkusí soubor se stejným názvem a příponou `.mtl`.
+- **`model`**: Cesta k 3D modelu (`.glb`, `.gltf`, `.obj` nebo `.stl`). Např. `"/assets/moje-logo.obj"`.
+- **`texture`**: Volitelná cesta k obrázkové textuře (PNG, JPG, WebP) pro OBJ, STL i GLB (např. `"/assets/textura.png"`). U formátu STL web automaticky dogeneruje UV mapování.
+- **`material`**: Volitelná cesta k souboru materiálů `.mtl` pro OBJ (např. `"/assets/logo.mtl"`). Pokud není zadáno, web u OBJ automaticky zkusí soubor se stejným názvem a příponou `.mtl`.
 - **`color`**: Volitelná barva modelu v HEX formátu (např. `"#0095f8"` nebo `"#14A4FF"`), pokud model nemá vlastní texturu.
 - **`metalness`** a **`roughness`**: PBR vlastnosti povrchu (od 0.0 do 1.0, výchozí `0.50` a `0.36`).
 - **`rotation`**: Výchozí natočení modelu ve stupních `{ "x": 0, "y": 0, "z": 0 }`. Není třeba sahat do kódu.
@@ -186,7 +186,10 @@ Stačí v `server-content/site.json` přidat sekci `subdomains`:
       "title": "KubiV | Medicína",
       "description": "Články a interaktivní projekty z medicíny",
       "accentColor": "#059669",
-      "navTitle": "KubiV.med"
+      "navTitle": "KubiV.med",
+      "iconUrl": "/assets/med-logo.svg",
+      "showSocial": false,
+      "heroLogo": "/assets/med-logo.svg"
     }
   }
 }
@@ -195,8 +198,11 @@ Stačí v `server-content/site.json` přidat sekci `subdomains`:
 ### Co se na subdoméně automaticky stane:
 - **Detekce v `hooks.server.js`:** Ze záhlaví `x-forwarded-host` / `host` (z Cloudflare Tunnelu nebo reverse proxy) se rozpozná subdoména (např. `med`).
 - **Automatické filtrování obsahu:** Na úvodní stránce (`/`) i v přehledu článků (`/blog` a `/category`) se zobrazují pouze články zařazené v dané kategorii (`medicina` / `Medicína`).
-- **Dynamický barevný motiv:** CSS proměnné (`--accent`, `--accent-color`, `--accent-hover`, `--top-bar-gradient` atd.) se okamžitě přepočítají podle `accentColor` dané subdomény.
-- **Vlastní název v hlavičce (`navTitle`) a odkaz zpět:** Hlavička zobrazí např. `KubiV.med` a vedle něj i v patičce decentní odkaz pro návrat na hlavní doménu.
+- **Dynamický barevný motiv:** CSS proměnné (`--accent`, `--accent-color`, `--accent-hover`, `--top-bar-gradient`, barva měsíčku v dark mode přepínači atd.) se okamžitě přepočítají podle `accentColor` dané subdomény.
+- **Vlastní název a loga (`navTitle`, `iconUrl`, `heroLogo`):**
+  - `navTitle`: text v levém horním rohu hlavičky (např. `KubiV.med`).
+  - `iconUrl`: volitelné malé logo v hlavičce vedle názvu (např. `"/assets/med-logo.svg"`).
+  - `heroLogo`: volitelné velké logo (2D SVG/PNG nebo 3D `.obj`/`.glb`/`.stl` model, případně `false`/`"none"` pro skrytí) zobrazené vpravo v úvodní sekci místo hlavního 3D loga.
 - **SEO a Sitemap:** Canonical URL a `/sitemap.xml` respektují příslušnou subdoménu a nevznikají duplicity.
 
 ---

@@ -101,7 +101,7 @@
 	.toggle-thumb.is-dark {
 		transform: translateX(26px);
 		border-color: var(--accent-border);
-		box-shadow: 0 1px 5px rgba(20, 164, 255, 0.2);
+		box-shadow: var(--accent-glow);
 	}
 
 	/* Pozice a chování ikon */
@@ -125,7 +125,7 @@
 	}
 
 	.icon-slot.moon-slot.active {
-		color: #38bdf8; /* Jasná nebeská modř pro měsíc */
+		color: var(--accent); /* Respektuje centrální / subdoménovou accent barvu */
 		opacity: 1;
 		transform: scale(1.05);
 	}

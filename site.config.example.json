@@ -21,22 +21,22 @@
   },
 
   "logo": {
-    "_comment_iconUrl": "Cesta k logu v hlavičce. Můžete nahrát vlastní logo do server-content/assets/logo.svg a zadat '/custom-assets/logo.svg'.",
+    "_comment_iconUrl": "Cesta k logu v hlavičce. Můžete nahrát vlastní logo do server-content/assets/logo.svg a zadat '/assets/logo.svg'.",
     "text": "KubiV",
     "iconUrl": "/logos/logo-flat.svg"
   },
 
   "logo3d": {
-    "_comment": "Podrobné nastavení interaktivních 3D modelů pro hlavní stránku a sekci O mně. Podporované formáty: .glb, .gltf, .obj, .stl. Vlastní soubory doporučujeme nahrát do 'server-content/assets/' a odkazovat přes '/custom-assets/...'.",
+    "_comment": "Podrobné nastavení interaktivních 3D modelů pro hlavní stránku a sekci O mně. Podporované formáty: .glb, .gltf, .obj, .stl. Vlastní soubory doporučujeme nahrát do 'server-content/assets/' a odkazovat přes '/assets/...'.",
     "enabled": true,
     "showOnHome": true,
     "showOnAbout": true,
     "home": {
-      "_comment_model": "Cesta k modelu: např. '/models/logo.obj', '/custom-assets/logo.obj' nebo '/custom-assets/logo.stl'",
+      "_comment_model": "Cesta k modelu: např. '/models/logo.obj', '/assets/logo.obj' nebo '/assets/logo.stl'",
       "model": "/models/logo.obj",
-      "_comment_texture": "Volitelná obrázková textura (PNG, JPG, WebP) pro STL, OBJ i GLB, např. '/custom-assets/logo-texture.png'",
+      "_comment_texture": "Volitelná obrázková textura (PNG, JPG, WebP) pro STL, OBJ i GLB, např. '/assets/logo-texture.png'",
       "texture": "",
-      "_comment_material": "Volitelný materiálový soubor pro OBJ (.mtl), např. '/custom-assets/logo.mtl'",
+      "_comment_material": "Volitelný materiálový soubor pro OBJ (.mtl), např. '/assets/logo.mtl'",
       "material": "",
       "_comment_color": "Volitelná barva materiálu (HEX kód např. '#0095f8'), pokud model nemá vlastní texturu",
       "color": "",
@@ -48,7 +48,7 @@
       "size": 125
     },
     "about": {
-      "_comment": "Pokud model ponecháte prázdný (''), použije se výchozí model z home. Zde můžete zadat např. '/models/pandulak.obj' nebo vlastní model z '/custom-assets/...' ",
+      "_comment": "Pokud model ponecháte prázdný (''), použijí se automaticky hodnoty z home. Zde můžete zadat např. '/models/pandulak.obj' nebo vlastní model z '/assets/...' ",
       "model": "",
       "texture": "",
       "material": "",
@@ -103,15 +103,16 @@
   },
 
   "subdomains": {
-    "_comment": "Definice tematických subdomén běžících na stejné instanci (např. med.kubiv.cz). Automaticky filtruje články podle kategorie, přepíná barevný motiv, viditelnost sociálních sítí (showSocial) a pravé logo v úvodu (heroLogo).",
+    "_comment": "Definice tematických subdomén běžících na stejné instanci (např. med.kubiv.cz). Automaticky filtruje články podle kategorie, přepíná barevný motiv, viditelnost sociálních sítí (showSocial), ikonu v hlavičce (iconUrl) a pravé logo v úvodu (heroLogo).",
     "med": {
       "category": "medicina",
       "title": "KubiV | Medicína",
       "description": "Články a interaktivní projekty z medicíny",
       "accentColor": "#059669",
       "navTitle": "KubiV.med",
+      "iconUrl": "/assets/med-logo.svg",
       "showSocial": false,
-      "heroLogo": ""
+      "heroLogo": "/assets/med-logo.svg"
     }
   }
 }

@@ -17,8 +17,9 @@ echo "=========================================="
 echo "📥 Stahuji nejnovější změny z GitHubu..."
 git pull origin main
 
-# 2. Zajistit existenci potřebných složek a oprávnění pro Filebrowser
+# 2. Zajistit existenci potřebných složek, .env a oprávnění pro Filebrowser
 mkdir -p filebrowser server-content/blog server-content/assets
+[ ! -f .env ] && cp .env.example .env 2>/dev/null || true
 [ ! -f server-content/site.json.example ] && cp site.config.example.json server-content/site.json.example 2>/dev/null || true
 if [ -d vzorove-clanky ]; then
 	mkdir -p server-content/vzorove-clanky

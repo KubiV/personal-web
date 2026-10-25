@@ -6,10 +6,12 @@ dist
 .github
 server-content
 filebrowser
+vzorove-clanky
 Dockerfile*
 docker-compose*.yml
+*.sh
 .env*
 *.log
 .DS_Store
-README.md
+*.md
 LICENSE

@@ -19,6 +19,26 @@ export function getContentPath() {
 }
 
 /**
+ * Normalize asset paths from site.json so that `/assets/...`, `assets/...`,
+ * `./assets/...`, `/custom-assets/...`, or bare filenames inside `server-content/assets/`
+ * always resolve to a valid root-relative URL.
+ */
+export function normalizeAssetUrl(val) {
+	if (typeof val !== 'string') return val;
+	const trimmed = val.trim();
+	if (!trimmed || trimmed === 'none' || trimmed === 'false') return trimmed;
+	if (/^(https?:\/\/|data:|\/)/i.test(trimmed)) return trimmed;
+
+	const clean = trimmed.replace(/^\.\//, '');
+	if (clean.startsWith('assets/') || clean.startsWith('custom-assets/') || clean.startsWith('logos/') || clean.startsWith('models/')) {
+		return `/${clean}`;
+	}
+
+	// Bare filename (e.g. "med-logo.svg") -> map to /assets/<file>
+	return `/assets/${clean}`;
+}
+
+/**
  * Deep merge utility for objects.
  * Target keys take precedence over source keys.
  * Preserves default values for any keys omitted in target.
@@ -132,6 +152,23 @@ export function getSiteRuntimeData() {
 			}
 			if (userConfig.logo.fallback3d && (!userConfig.logo3d || !userConfig.logo3d.home?.fallbackImage)) {
 				merged.logo3d.home.fallbackImage = userConfig.logo.fallback3d;
+			}
+		}
+
+		// Normalizace cest k logům a 3D modelům (podpora /assets/..., assets/..., /custom-assets/...)
+		if (merged.logo?.iconUrl) {
+			merged.logo.iconUrl = normalizeAssetUrl(merged.logo.iconUrl);
+		}
+		if (merged.home?.heroLogo && typeof merged.home.heroLogo === 'string') {
+			merged.home.heroLogo = normalizeAssetUrl(merged.home.heroLogo);
+		}
+		for (const section of ['home', 'about']) {
+			const s = merged.logo3d?.[section];
+			if (s && typeof s === 'object') {
+				if (s.model) s.model = normalizeAssetUrl(s.model);
+				if (s.texture) s.texture = normalizeAssetUrl(s.texture);
+				if (s.material) s.material = normalizeAssetUrl(s.material);
+				if (s.fallbackImage) s.fallbackImage = normalizeAssetUrl(s.fallbackImage);
 			}
 		}
 
@@ -296,9 +333,33 @@ export function resolveSubdomainData(event) {
 	const showFooterSocial =
 		subConfig.showFooterSocial !== undefined ? Boolean(subConfig.showFooterSocial) : true;
 
-	const heroLogo = subConfig.heroLogo !== undefined ? subConfig.heroLogo : subConfig.logo;
-	const iconUrl = subConfig.iconUrl || config.logo?.iconUrl || '/logos/logo-flat.svg';
-	const logo3dOverride = subConfig.logo3d && typeof subConfig.logo3d === 'object' ? subConfig.logo3d : null;
+	const rawHeroLogo =
+		subConfig.heroLogo !== undefined
+			? subConfig.heroLogo
+			: typeof subConfig.logo === 'string' || typeof subConfig.logo === 'boolean'
+				? subConfig.logo
+				: undefined;
+	const heroLogo = typeof rawHeroLogo === 'string' ? normalizeAssetUrl(rawHeroLogo) : rawHeroLogo;
+
+	const rawIconUrl =
+		subConfig.iconUrl ||
+		(typeof subConfig.logo === 'object' && subConfig.logo?.iconUrl) ||
+		config.logo?.iconUrl ||
+		'/logos/logo-flat.svg';
+	const iconUrl = normalizeAssetUrl(rawIconUrl);
+
+	const logo3dOverride =
+		subConfig.logo3d && typeof subConfig.logo3d === 'object'
+			? {
+					...subConfig.logo3d,
+					...(subConfig.logo3d.model ? { model: normalizeAssetUrl(subConfig.logo3d.model) } : {}),
+					...(subConfig.logo3d.texture ? { texture: normalizeAssetUrl(subConfig.logo3d.texture) } : {}),
+					...(subConfig.logo3d.material ? { material: normalizeAssetUrl(subConfig.logo3d.material) } : {}),
+					...(subConfig.logo3d.fallbackImage
+						? { fallbackImage: normalizeAssetUrl(subConfig.logo3d.fallbackImage) }
+						: {})
+				}
+			: null;
 
 	return {
 		subdomain: matchedKey.toLowerCase(),
@@ -307,7 +368,13 @@ export function resolveSubdomainData(event) {
 		tagline: subConfig.tagline || subConfig.description || config.tagline || '',
 		description: subConfig.description || config.description || '',
 		accentColor,
-		navTitle: subConfig.navTitle || subConfig.title || config.logo?.text || config.title || 'KubiV',
+		navTitle:
+			subConfig.navTitle ||
+			(typeof subConfig.logo === 'object' && subConfig.logo?.text) ||
+			subConfig.title ||
+			config.logo?.text ||
+			config.title ||
+			'KubiV',
 		iconUrl,
 		heroTitle: subConfig.heroTitle || subConfig.title || config.home?.heroTitle || 'Vítejte',
 		heroLead: subConfig.heroLead || subConfig.description || config.home?.heroLead || '',
