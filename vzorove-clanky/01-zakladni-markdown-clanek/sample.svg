@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" rx="16" fill="url(#bg1)" />
+  <circle cx="680" cy="90" r="140" fill="#14A4FF" opacity="0.15" />
+  <rect x="60" y="70" width="140" height="36" rx="18" fill="#14A4FF" opacity="0.2" />
+  <text x="130" y="94" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="16" font-weight="700" text-anchor="middle">MARKDOWN</text>
+  <text x="60" y="185" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="42" font-weight="800">Klasický článek</text>
+  <text x="60" y="235" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="22">Text, obrázky, tabulky a bloky kódu</text>
+</svg>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Interaktivní generátor průběhu</title>
+	<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+	<div class="app-card">
+		<header class="app-header">
+			<div>
+				<span class="tag">HTML + Canvas + JS</span>
+				<h2>Interaktivní laboratorní osciloskop</h2>
+			</div>
+			<button id="pauseBtn" type="button" class="btn">Pozastavit</button>
+		</header>
+
+		<canvas id="waveCanvas" width="700" height="240"></canvas>
+
+		<div class="controls-grid">
+			<label class="control">
+				<span>Frekvence: <strong id="freqVal">2.0 Hz</strong></span>
+				<input id="freqInput" type="range" min="0.5" max="8" step="0.1" value="2.0" />
+			</label>
+			<label class="control">
+				<span>Amplituda: <strong id="ampVal">70 %</strong></span>
+				<input id="ampInput" type="range" min="10" max="95" step="1" value="70" />
+			</label>
+			<label class="control">
+				<span>Tvar vlny:</span>
+				<select id="typeSelect">
+					<option value="sine">Sinusovka</option>
+					<option value="square">Obdélník</option>
+					<option value="triangle">Trojúhelník</option>
+				</select>
+			</label>
+		</div>
+	</div>
+
+	<script src="./app.js"></script>
+</body>
+</html>

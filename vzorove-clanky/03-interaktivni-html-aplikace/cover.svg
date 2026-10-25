@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <rect width="800" height="450" rx="16" fill="#0f172a" />
+  <path d="M 40 225 Q 130 60, 220 225 T 400 225 T 580 225 T 760 225" fill="none" stroke="#38bdf8" stroke-width="8" stroke-linecap="round" />
+  <rect x="60" y="55" width="180" height="36" rx="18" fill="#14A4FF" opacity="0.22" />
+  <text x="150" y="79" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">INTERAKTIVNÍ APP</text>
+  <text x="60" y="385" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="34" font-weight="800">HTML + JS Osciloskop</text>
+</svg>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Klinická kalkulačka MAP & BMI</title>
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			padding: 1.25rem;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+			background: #f0fdf4;
+			color: #064e3b;
+		}
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+			gap: 1.25rem;
+			max-width: 740px;
+			margin: 0 auto;
+		}
+		.card {
+			background: #ffffff;
+			border: 1px solid #a7f3d0;
+			border-radius: 12px;
+			padding: 1.25rem;
+			box-shadow: 0 4px 12px rgba(5, 150, 105, 0.06);
+		}
+		h3 {
+			margin: 0 0 0.85rem 0;
+			color: #047857;
+			font-size: 1.1rem;
+		}
+		label {
+			display: block;
+			font-size: 0.85rem;
+			font-weight: 600;
+			margin-bottom: 0.65rem;
+		}
+		input {
+			width: 100%;
+			padding: 0.45rem 0.6rem;
+			margin-top: 0.25rem;
+			border: 1px solid #6ee7b7;
+			border-radius: 6px;
+			font-size: 0.95rem;
+		}
+		.result {
+			margin-top: 1rem;
+			padding: 0.75rem;
+			background: #ecfdf5;
+			border-left: 4px solid #059669;
+			border-radius: 4px;
+			font-size: 0.95rem;
+		}
+		.result strong {
+			font-size: 1.25rem;
+			color: #059669;
+		}
+	</style>
+</head>
+<body>
+	<div class="grid">
+		<div class="card">
+			<h3>Střední arteriální tlak (MAP)</h3>
+			<label>
+				Systolický TK (mmHg)
+				<input id="sbp" type="number" value="120" min="40" max="260" />
+			</label>
+			<label>
+				Diastolický TK (mmHg)
+				<input id="dbp" type="number" value="80" min="20" max="180" />
+			</label>
+			<div class="result">
+				MAP = <strong id="mapResult">93.3 mmHg</strong>
+				<div id="mapNote" style="font-size: 0.8rem; margin-top: 0.25rem;">Normální perfuzní tlak (70–100 mmHg)</div>
+			</div>
+		</div>
+
+		<div class="card">
+			<h3>Body Mass Index (BMI)</h3>
+			<label>
+				Hmotnost (kg)
+				<input id="weight" type="number" value="75" min="20" max="250" />
+			</label>
+			<label>
+				Výška (cm)
+				<input id="height" type="number" value="178" min="100" max="230" />
+			</label>
+			<div class="result">
+				BMI = <strong id="bmiResult">23.7 kg/m²</strong>
+				<div id="bmiNote" style="font-size: 0.8rem; margin-top: 0.25rem;">Normální hmotnost</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		function updateCalculators() {
+			const sbp = parseFloat(document.getElementById('sbp').value) || 0;
+			const dbp = parseFloat(document.getElementById('dbp').value) || 0;
+			const map = dbp + (sbp - dbp) / 3;
+			document.getElementById('mapResult').textContent = `${map.toFixed(1)} mmHg`;
+			document.getElementById('mapNote').textContent =
+				map < 65 ? 'Snížený perfuzní tlak (< 65 mmHg)' : map > 105 ? 'Zvýšený MAP (> 105 mmHg)' : 'Normální perfuzní tlak (65–105 mmHg)';
+
+			const w = parseFloat(document.getElementById('weight').value) || 0;
+			const h = (parseFloat(document.getElementById('height').value) || 170) / 100;
+			const bmi = w / (h * h);
+			document.getElementById('bmiResult').textContent = `${bmi.toFixed(1)} kg/m²`;
+			document.getElementById('bmiNote').textContent =
+				bmi < 18.5 ? 'Podváha' : bmi < 25 ? 'Normální hmotnost' : bmi < 30 ? 'Nadváha' : 'Obezita';
+		}
+
+		document.querySelectorAll('input').forEach((el) => el.addEventListener('input', updateCalculators));
+		updateCalculators();
+	</script>
+</body>
+</html>
