@@ -1,13 +1,26 @@
-import { getAllPosts, getAllCategories } from '$lib/server/content';
+import { getAllPosts, getAllCategories, getPostsByCategory } from '$lib/server/content';
 import { getSiteConfig } from '$lib/server/config.js';
 
 export const prerender = false;
 
-export async function GET({ url }) {
+export async function GET({ url, locals }) {
 	const siteConfig = getSiteConfig();
-	const origin = process.env.PUBLIC_SITE_URL || process.env.ORIGIN || siteConfig?.url || url.origin;
-	const posts = await getAllPosts();
-	const categories = await getAllCategories();
+	const subdomainData = locals?.subdomainData;
+	const hostInfo = locals?.hostInfo;
+
+	const origin = subdomainData
+		? subdomainData.origin
+		: process.env.PUBLIC_SITE_URL ||
+			process.env.ORIGIN ||
+			(hostInfo?.hostname && hostInfo.hostname !== 'localhost' ? hostInfo.origin : null) ||
+			siteConfig?.url ||
+			url.origin;
+
+	const subdomainCategory = subdomainData?.category || null;
+	const [posts, categories] = await Promise.all([
+		subdomainCategory ? getPostsByCategory(subdomainCategory) : getAllPosts(),
+		getAllCategories(subdomainCategory)
+	]);
 
 	const staticPages = [
 		{ loc: '', changefreq: 'weekly', priority: '1.0' },

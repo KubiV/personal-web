@@ -1,9 +1,71 @@
 <script>
+	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { getPostCategories } from '$lib/utils.js';
 	export let data;
 	$: post = data.post;
 	$: postCategories = getPostCategories(post);
+
+	let iframeWrapperEl;
+	let iframeEl;
+	let isFullscreen = false;
+	let dynamicIframeHeight = null;
+
+	function toggleFullscreen() {
+		if (!iframeWrapperEl) return;
+
+		if (!isFullscreen) {
+			if (iframeWrapperEl.requestFullscreen) {
+				iframeWrapperEl.requestFullscreen().catch(() => {
+					isFullscreen = true;
+				});
+			} else {
+				isFullscreen = true;
+			}
+		} else {
+			if (document.fullscreenElement && document.exitFullscreen) {
+				document.exitFullscreen().catch(() => {
+					isFullscreen = false;
+				});
+			} else {
+				isFullscreen = false;
+			}
+		}
+	}
+
+	onMount(() => {
+		function handleFullscreenChange() {
+			isFullscreen = Boolean(document.fullscreenElement === iframeWrapperEl);
+		}
+
+		function handleKeydown(e) {
+			if (e.key === 'Escape' && isFullscreen && !document.fullscreenElement) {
+				isFullscreen = false;
+			}
+		}
+
+		function handleMessage(e) {
+			if (
+				e.data &&
+				typeof e.data === 'object' &&
+				(e.data.type === 'iframe-resize' || e.data.type === 'resize') &&
+				typeof e.data.height === 'number' &&
+				e.data.height > 100
+			) {
+				dynamicIframeHeight = `${Math.ceil(e.data.height)}px`;
+			}
+		}
+
+		document.addEventListener('fullscreenchange', handleFullscreenChange);
+		window.addEventListener('keydown', handleKeydown);
+		window.addEventListener('message', handleMessage);
+
+		return () => {
+			document.removeEventListener('fullscreenchange', handleFullscreenChange);
+			window.removeEventListener('keydown', handleKeydown);
+			window.removeEventListener('message', handleMessage);
+		};
+	});
 
 	const langTitles = {
 		cs: 'Čeština (CZ)',
@@ -34,18 +96,19 @@
 	$: siteConfig = data?.siteConfig;
 	$: siteTitle = siteConfig?.title || 'KubiV';
 	$: defaultAuthorName = siteConfig?.author?.name || 'KubiV';
+	$: effectiveOrigin = data?.canonicalOrigin || data?.subdomainData?.origin || data?.hostInfo?.origin || $page.url.origin;
 
 	$: authorsList = post.authors && post.authors.length > 0 ? post.authors : [post.author || defaultAuthorName];
 	$: articleAuthorSchema = authorsList.length === 1
 		? {
 			'@type': 'Person',
 			name: authorsList[0],
-			...(authorsList[0] === defaultAuthorName ? { url: `${$page.url.origin}/about` } : {})
+			...(authorsList[0] === defaultAuthorName ? { url: `${effectiveOrigin}/about` } : {})
 		}
 		: authorsList.map((name) => ({
 			'@type': 'Person',
 			name,
-			...(name === defaultAuthorName ? { url: `${$page.url.origin}/about` } : {})
+			...(name === defaultAuthorName ? { url: `${effectiveOrigin}/about` } : {})
 		}));
 
 	$: articleSchema = JSON.stringify({
@@ -53,17 +116,17 @@
 		'@type': 'BlogPosting',
 		headline: post.title,
 		description: post.description || '',
-		image: post.image ? `${$page.url.origin}${post.image}` : undefined,
+		image: post.image ? `${effectiveOrigin}${post.image}` : undefined,
 		datePublished: post.date,
 		author: articleAuthorSchema,
 		publisher: {
 			'@type': 'Person',
 			name: siteTitle,
-			url: `${$page.url.origin}`
+			url: `${effectiveOrigin}`
 		},
 		mainEntityOfPage: {
 			'@type': 'WebPage',
-			'@id': `${$page.url.origin}/blog/${post.slug}`
+			'@id': `${effectiveOrigin}/blog/${post.slug}`
 		},
 		inLanguage: post.lang === 'cs' ? 'cs-CZ' : (post.lang === 'en' ? 'en-US' : post.lang),
 		articleSection: postCategories.length > 0 ? postCategories.map((c) => c.name) : post.category
@@ -74,7 +137,7 @@
 	<title>{post.title} - {siteTitle}</title>
 	<meta property="og:type" content="article" />
 	<meta property="og:title" content={post.title} />
-	<meta property="og:url" content="{$page.url.origin}/blog/{post.slug}{$page.url.searchParams.has('lang') ? `?lang=${post.lang}` : ''}" />
+	<meta property="og:url" content="{effectiveOrigin}/blog/{post.slug}{$page.url.searchParams.has('lang') ? `?lang=${post.lang}` : ''}" />
 	<meta property="article:published_time" content={post.date} />
 	{#each authorsList as authorName}
 		<meta property="article:author" content={authorName} />
@@ -96,15 +159,15 @@
 		<meta name="twitter:description" content={post.description} />
 	{/if}
 	{#if post.image}
-		<meta property="og:image" content="{$page.url.origin}{post.image}" />
-		<meta name="twitter:image" content="{$page.url.origin}{post.image}" />
+		<meta property="og:image" content="{effectiveOrigin}{post.image}" />
+		<meta name="twitter:image" content="{effectiveOrigin}{post.image}" />
 	{/if}
 
 	{#if post.availableLanguages && post.availableLanguages.length > 1}
 		{#each post.availableLanguages as l}
-			<link rel="alternate" hreflang={l} href="{$page.url.origin}/blog/{post.slug}?lang={l}" />
+			<link rel="alternate" hreflang={l} href="{effectiveOrigin}/blog/{post.slug}?lang={l}" />
 		{/each}
-		<link rel="alternate" hreflang="x-default" href="{$page.url.origin}/blog/{post.slug}" />
+		<link rel="alternate" hreflang="x-default" href="{effectiveOrigin}/blog/{post.slug}" />
 	{/if}
 
 	{@html `<script type="application/ld+json">${articleSchema}</` + `script>`}
@@ -178,9 +241,65 @@
 		</div>
 	</header>
 
-	<div class="prose">
-		{@html post.html}
-	</div>
+	{#if post.interactive && post.iframeUrl}
+		{#if post.hasMarkdownContent && post.contentPosition === 'above'}
+			<div class="prose" style="margin-bottom: 1.75rem;">
+				{@html post.html}
+			</div>
+		{/if}
+
+		<div
+			class="interactive-app-wrapper"
+			class:is-fullscreen={isFullscreen}
+			bind:this={iframeWrapperEl}
+		>
+			<div class="interactive-app-toolbar">
+				<span class="interactive-badge">Interaktivní aplikace</span>
+				<div class="interactive-toolbar-actions">
+					<a
+						href={post.iframeUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="interactive-action-btn"
+						title="Otevřít aplikaci v novém okně"
+					>
+						Otevřít samostatně &#8599;
+					</a>
+					<button
+						type="button"
+						class="interactive-action-btn interactive-fullscreen-btn"
+						on:click={toggleFullscreen}
+						aria-label={isFullscreen ? 'Ukončit celou obrazovku' : 'Zobrazit na celou obrazovku'}
+					>
+						{#if isFullscreen}
+							&#x2715; Ukončit celou obrazovku
+						{:else}
+							&#x26F6; Celá obrazovka
+						{/if}
+					</button>
+				</div>
+			</div>
+			<iframe
+				bind:this={iframeEl}
+				src={post.iframeUrl}
+				title={post.title}
+				class="interactive-app-iframe"
+				sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+				allow="fullscreen"
+				style="border: none; width: 100%; height: {isFullscreen ? 'calc(100vh - 42px)' : (dynamicIframeHeight || post.iframeHeight || '80vh')}; border-radius: 0 0 8px 8px; display: block;"
+			></iframe>
+		</div>
+
+		{#if post.hasMarkdownContent && post.contentPosition !== 'above'}
+			<div class="prose" style="margin-top: 2rem;">
+				{@html post.html}
+			</div>
+		{/if}
+	{:else}
+		<div class="prose">
+			{@html post.html}
+		</div>
+	{/if}
 
 	<hr />
 

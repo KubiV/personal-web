@@ -65,6 +65,26 @@ Cloudflare v sekci **DNS** -> **Records** automaticky vytvoří záznam:
 - **Cíl:** `<TUNNEL_ID>.cfargotunnel.com`
 - **Proxy status:** `Proxied` (oranžový mráček zapnut)
 
+### Krok 3: Tematické multi-subdomény na stejný kontejner (např. `med.vasedomena.cz`)
+Pokud chcete provozovat tematickou subdoménu (např. `med.vasedomena.cz` filtrovanou na kategorii `medicina` s vlastním barevným motivem):
+1. V Cloudflare Zero Trust -> **Tunnels** -> **Public Hostnames** přidejte další trasu:
+   - **Subdomain:** `med`
+   - **Domain:** `vasedomena.cz`
+   - **Service:** `http://personal-web:3000` *(směřuje na úplně stejný kontejner jako hlavní web!)*
+2. V souboru `server-content/site.json` (přes Filebrowser CMS) přidejte konfiguraci subdomény:
+   ```json
+   "subdomains": {
+     "med": {
+       "category": "medicina",
+       "title": "KubiV | Medicína",
+       "description": "Články a interaktivní projekty z medicíny",
+       "accentColor": "#059669",
+       "navTitle": "KubiV.med"
+     }
+   }
+   ```
+3. Změna v `site.json` se projeví okamžitě bez nutnosti restartovat kontejner.
+
 ---
 
 ## 4. Řešení častých problémů a diagnostika

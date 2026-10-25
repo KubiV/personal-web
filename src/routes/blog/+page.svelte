@@ -5,7 +5,10 @@
 	let activeFilter = 'all';
 
 	$: siteConfig = data?.siteConfig;
+	$: subdomainData = data?.subdomainData;
+	$: effectiveOrigin = subdomainData?.origin || data?.hostInfo?.origin || $page.url.origin;
 	$: siteTitle = siteConfig?.title || 'KubiV';
+	$: blogDesc = subdomainData?.description || `Články, poznámky a návody na webu ${siteTitle}.`;
 
 	$: filteredPosts = activeFilter === 'all'
 		? data.posts
@@ -16,14 +19,14 @@
 
 <svelte:head>
 	<title>Blog - {siteTitle}</title>
-	<meta name="description" content="Články, poznámky a návody na webu {siteTitle}." />
+	<meta name="description" content={blogDesc} />
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Blog - {siteTitle}" />
-	<meta property="og:description" content="Články, poznámky a návody na webu {siteTitle}." />
-	<meta property="og:url" content="{$page.url.origin}/blog" />
+	<meta property="og:description" content={blogDesc} />
+	<meta property="og:url" content="{effectiveOrigin}/blog" />
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Blog - {siteTitle}" />
-	<meta name="twitter:description" content="Články, poznámky a návody na webu {siteTitle}." />
+	<meta name="twitter:description" content={blogDesc} />
 </svelte:head>
 
 <div style="margin-bottom: 2rem;">

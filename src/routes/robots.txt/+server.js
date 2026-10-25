@@ -2,9 +2,18 @@ import { getSiteConfig } from '$lib/server/config.js';
 
 export const prerender = false;
 
-export async function GET({ url }) {
+export async function GET({ url, locals }) {
 	const siteConfig = getSiteConfig();
-	const origin = process.env.PUBLIC_SITE_URL || process.env.ORIGIN || siteConfig?.url || url.origin;
+	const subdomainData = locals?.subdomainData;
+	const hostInfo = locals?.hostInfo;
+
+	const origin = subdomainData
+		? subdomainData.origin
+		: process.env.PUBLIC_SITE_URL ||
+			process.env.ORIGIN ||
+			(hostInfo?.hostname && hostInfo.hostname !== 'localhost' ? hostInfo.origin : null) ||
+			siteConfig?.url ||
+			url.origin;
 	const body = [
 		'User-agent: *',
 		'Allow: /',

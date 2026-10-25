@@ -61,6 +61,10 @@
 					{/each}
 				</span>
 			{/if}
+			{#if post.interactive}
+				<span>&bull;</span>
+				<span class="interactive-pill-badge" title="Interaktivní HTML+JS aplikace">Interaktivní</span>
+			{/if}
 			{#if post.languages && post.languages.length > 0}
 				<span>&bull;</span>
 				<span class="lang-badges" aria-label="Dostupné jazyky">

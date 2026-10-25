@@ -6,10 +6,13 @@
 	export let data;
 
 	$: siteConfig = data?.siteConfig;
+	$: subdomainData = data?.subdomainData;
+	$: effectiveOrigin = subdomainData?.origin || data?.hostInfo?.origin || $page.url.origin;
 	$: authorName = siteConfig?.author?.name || 'KubiV';
 	$: siteTitle = siteConfig?.title || 'KubiV';
 	$: siteTagline = siteConfig?.tagline || 'Personal Website';
 	$: siteDesc = siteConfig?.description || 'Osobní web a blog - technologie, software, hardware a projekty.';
+	$: pageTitle = subdomainData ? siteTitle : `${siteTitle} - ${siteTagline}`;
 	$: socialLinksList = siteConfig?.social
 		? Object.values(siteConfig.social).filter(Boolean)
 		: ['https://github.com/KubiV'];
@@ -19,17 +22,17 @@
 		'@graph': [
 			{
 				'@type': 'WebSite',
-				'@id': `${$page.url.origin}/#website`,
-				url: $page.url.origin,
+				'@id': `${effectiveOrigin}/#website`,
+				url: effectiveOrigin,
 				name: siteTitle,
 				description: siteDesc,
 				inLanguage: siteConfig?.locale || 'cs-CZ'
 			},
 			{
 				'@type': 'Person',
-				'@id': `${$page.url.origin}/#person`,
+				'@id': `${effectiveOrigin}/#person`,
 				name: authorName,
-				url: `${$page.url.origin}/about`,
+				url: `${effectiveOrigin}/about`,
 				sameAs: socialLinksList
 			}
 		]
@@ -37,14 +40,14 @@
 </script>
 
 <svelte:head>
-	<title>{siteTitle} - {siteTagline}</title>
+	<title>{pageTitle}</title>
 	<meta name="description" content={siteDesc} />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="{siteTitle} - {siteTagline}" />
+	<meta property="og:title" content={pageTitle} />
 	<meta property="og:description" content={siteDesc} />
-	<meta property="og:url" content={$page.url.origin} />
+	<meta property="og:url" content={effectiveOrigin} />
 	<meta name="twitter:card" content="summary" />
-	<meta name="twitter:title" content="{siteTitle} - {siteTagline}" />
+	<meta name="twitter:title" content={pageTitle} />
 	<meta name="twitter:description" content={siteDesc} />
 	{@html `<script type="application/ld+json">${siteSchema}</` + `script>`}
 </svelte:head>

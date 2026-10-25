@@ -100,5 +100,16 @@
   "footer": {
     "copyright": "KubiV",
     "showYear": true
+  },
+
+  "subdomains": {
+    "_comment": "Definice tematických subdomén běžících na stejné instanci (např. med.vavra.pro). Automaticky filtruje články podle kategorie a přepíná barevný motiv.",
+    "med": {
+      "category": "medicina",
+      "title": "KubiV | Medicína",
+      "description": "Články a interaktivní projekty z medicíny",
+      "accentColor": "#059669",
+      "navTitle": "KubiV.med"
+    }
   }
 }

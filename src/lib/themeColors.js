@@ -78,6 +78,7 @@ export function generateThemeCss(accentHex = '#14A4FF') {
 	return `
 :root {
   --accent: ${mainHex};
+  --accent-color: ${mainHex};
   --accent-hover: ${hoverLightHex};
   --accent-light: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08);
   --accent-border: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.30);
@@ -91,6 +92,7 @@ export function generateThemeCss(accentHex = '#14A4FF') {
 :root[data-theme="dark"],
 :root.dark {
   --accent: ${mainHex};
+  --accent-color: ${mainHex};
   --accent-hover: ${hoverDarkHex};
   --accent-light: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15);
   --accent-border: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35);

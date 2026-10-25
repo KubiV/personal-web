@@ -49,26 +49,45 @@ export const COMMON_MIME_TYPES = {
 	'.avif': 'image/avif',
 	'.ico': 'image/x-icon',
 	'.bmp': 'image/bmp',
+	// Web & Interactive App Assets
+	'.html': 'text/html; charset=utf-8',
+	'.htm': 'text/html; charset=utf-8',
+	'.js': 'text/javascript; charset=utf-8',
+	'.mjs': 'text/javascript; charset=utf-8',
+	'.css': 'text/css; charset=utf-8',
+	'.json': 'application/json; charset=utf-8',
+	'.map': 'application/json; charset=utf-8',
+	'.wasm': 'application/wasm',
+	'.xml': 'application/xml; charset=utf-8',
+	'.txt': 'text/plain; charset=utf-8',
+	'.md': 'text/markdown; charset=utf-8',
+	'.csv': 'text/csv; charset=utf-8',
+	// Fonts
+	'.woff2': 'font/woff2',
+	'.woff': 'font/woff',
+	'.ttf': 'font/ttf',
+	'.otf': 'font/otf',
+	'.eot': 'application/vnd.ms-fontobject',
+	// Audio & Video
+	'.mp3': 'audio/mpeg',
+	'.wav': 'audio/wav',
+	'.ogg': 'audio/ogg',
+	'.mp4': 'video/mp4',
+	'.webm': 'video/webm',
 	// 3D Printing & CAD models
 	'.3mf': 'model/3mf',
 	'.stl': 'model/stl',
 	'.step': 'model/step',
 	'.stp': 'model/step',
 	'.gcode': 'text/x-gcode',
-	'.obj': 'text/plain',
-	'.mtl': 'text/plain',
+	'.obj': 'text/plain; charset=utf-8',
+	'.mtl': 'text/plain; charset=utf-8',
 	'.glb': 'model/gltf-binary',
 	'.gltf': 'model/gltf+json',
+	'.bin': 'application/octet-stream',
 	// Code & Scripts
-	'.py': 'text/x-python',
+	'.py': 'text/x-python; charset=utf-8',
 	'.sh': 'application/x-sh',
-	'.js': 'text/javascript',
-	'.json': 'application/json',
-	'.html': 'text/html',
-	'.css': 'text/css',
-	'.txt': 'text/plain; charset=utf-8',
-	'.md': 'text/markdown; charset=utf-8',
-	'.csv': 'text/csv',
 	// Archives & Documents
 	'.pdf': 'application/pdf',
 	'.zip': 'application/zip',
@@ -77,6 +96,45 @@ export const COMMON_MIME_TYPES = {
 	'.7z': 'application/x-7z-compressed',
 	'.rar': 'application/vnd.rar'
 };
+
+export const INLINE_ASSET_EXTENSIONS = new Set([
+	'.jpg',
+	'.jpeg',
+	'.png',
+	'.webp',
+	'.gif',
+	'.svg',
+	'.avif',
+	'.ico',
+	'.bmp',
+	'.html',
+	'.htm',
+	'.js',
+	'.mjs',
+	'.css',
+	'.json',
+	'.map',
+	'.wasm',
+	'.xml',
+	'.txt',
+	'.csv',
+	'.woff2',
+	'.woff',
+	'.ttf',
+	'.otf',
+	'.eot',
+	'.mp3',
+	'.wav',
+	'.ogg',
+	'.mp4',
+	'.webm',
+	'.pdf',
+	'.glb',
+	'.gltf',
+	'.obj',
+	'.mtl',
+	'.bin'
+]);
 
 /**
  * Resilient file resolver for article / about directories.
@@ -324,38 +382,60 @@ export function resolveCategories(data) {
 
 /**
  * Detect all available language variants in a directory dynamically.
- * Matches index.<lang>.md (e.g. index.cs.md, index.en.md, index.fr.md, index.de.md)
- * and index.md (which defaults to cs or reads frontmatter lang).
+ * Matches index.<lang>.md (e.g. index.cs.md, index.en.md, index.fr.md, index.de.md),
+ * index.md, <slug>.<lang>.md, and <slug>.md (which defaults to cs or reads frontmatter lang).
  */
-export async function detectDirectoryLanguages(dir) {
+export async function detectDirectoryLanguages(dir, slug = null) {
 	const fileMap = new Map();
 
 	if (!fs.existsSync(dir)) {
 		return { languages: [], fileMap };
 	}
 
+	const dirSlug = (slug || path.basename(dir)).toLowerCase();
+
 	try {
 		const files = await fs.promises.readdir(dir);
 
 		for (const file of files) {
-			const match = file.match(/^index\.([a-zA-Z]{2,5})\.md$/i);
-			if (match) {
-				const code = match[1].toLowerCase();
+			const matchIndex = file.match(/^index\.([a-zA-Z]{2,5})\.md$/i);
+			if (matchIndex) {
+				const code = matchIndex[1].toLowerCase();
 				fileMap.set(code, file);
+				continue;
+			}
+
+			const escapedSlug = dirSlug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			const slugLangRegex = new RegExp(`^${escapedSlug}\\.([a-zA-Z]{2,5})\\.md$`, "i");
+			const matchSlug = file.match(slugLangRegex);
+			if (matchSlug) {
+				const code = matchSlug[1].toLowerCase();
+				if (!fileMap.has(code)) {
+					fileMap.set(code, file);
+				}
 			}
 		}
 
-		if (files.includes("index.md")) {
-			try {
-				const raw = await fs.promises.readFile(path.join(dir, "index.md"), "utf-8");
-				const { data } = matter(raw);
-				const code = (data.lang || "cs").toLowerCase();
-				if (!fileMap.has(code)) {
-					fileMap.set(code, "index.md");
-				}
-			} catch {
-				if (!fileMap.has("cs")) {
-					fileMap.set("cs", "index.md");
+		const primaryCandidates = ["index.md"];
+		for (const file of files) {
+			if (file.toLowerCase() === `${dirSlug}.md` && file !== "index.md") {
+				primaryCandidates.push(file);
+			}
+		}
+
+		for (const candidate of primaryCandidates) {
+			if (files.includes(candidate)) {
+				try {
+					const raw = await fs.promises.readFile(path.join(dir, candidate), "utf-8");
+					const { data } = matter(raw);
+					const code = (data.lang || "cs").toLowerCase();
+					if (!fileMap.has(code)) {
+						fileMap.set(code, candidate);
+					}
+				} catch {
+					if (!fileMap.has("cs")) {
+						fileMap.set("cs", candidate);
+					}
 				}
 			}
 		}
@@ -450,8 +530,9 @@ export function extractFirstImageFromMarkdown(content) {
  * - Direct image defined in frontmatter: image: "./cover.jpg", image: "cover.jpg", or external URL
  * - Explicitly disabled: image: false, image: "none", image: "false", image: null
  * - First image in article: image: "first", image: "auto", image: true, or when omitted/undefined
+ * - Fallback to cover.{png,jpg,jpeg,webp,svg,avif} in the article folder
  */
-export function resolveThumbnail(data, content, slug) {
+export function resolveThumbnail(data, content, slug, postDir = null) {
 	if (!data) return null;
 
 	const rawImage =
@@ -520,8 +601,94 @@ export function resolveThumbnail(data, content, slug) {
 		}
 	}
 
+	// Case 4: Check for cover.{png,jpg,jpeg,webp,svg,avif} in article directory
+	if (postDir && fs.existsSync(postDir)) {
+		try {
+			const files = fs.readdirSync(postDir);
+			const coverCandidates = [
+				"cover.png",
+				"cover.jpg",
+				"cover.jpeg",
+				"cover.webp",
+				"cover.svg",
+				"cover.avif",
+				"thumbnail.png",
+				"thumbnail.jpg",
+				"thumbnail.jpeg",
+				"thumbnail.webp"
+			];
+			for (const candidate of coverCandidates) {
+				const found = files.find((f) => f.toLowerCase() === candidate);
+				if (found) {
+					return {
+						image: `/blog/${slug}/${found}`,
+						imageAlt: data.imageAlt || data.thumbnailAlt || data.title || "",
+						imageSource: "cover"
+					};
+				}
+			}
+		} catch {}
+	}
+
 	// No thumbnail found
 	return null;
+}
+
+/**
+ * Resolve interactive HTML+JS article configuration from frontmatter and post directory.
+ */
+export function resolveInteractiveConfig(data, postDir, slug) {
+	if (!data) {
+		return {
+			interactive: false,
+			type: "markdown",
+			htmlFile: null,
+			iframeUrl: null,
+			iframeHeight: "80vh"
+		};
+	}
+
+	const typeStr = typeof data.type === "string" ? data.type.toLowerCase().trim() : "";
+	const hasExplicitHtmlField = typeof data.html === "string" && data.html.trim().length > 0;
+	const requestedHtml = hasExplicitHtmlField
+		? data.html.trim().replace(/^\.\//, "")
+		: "index.html";
+
+	let htmlFileOnDisk = null;
+	if (postDir && fs.existsSync(postDir)) {
+		try {
+			const files = fs.readdirSync(postDir);
+			htmlFileOnDisk =
+				files.find((f) => f === requestedHtml) ||
+				files.find((f) => f.toLowerCase() === requestedHtml.toLowerCase()) ||
+				null;
+		} catch {}
+	}
+
+	const isExplicitInteractive =
+		data.interactive === true ||
+		typeStr === "html" ||
+		typeStr === "interactive" ||
+		hasExplicitHtmlField;
+
+	const isImplicitInteractive =
+		data.interactive !== false && typeStr !== "markdown" && Boolean(htmlFileOnDisk);
+
+	const interactive = isExplicitInteractive || isImplicitInteractive;
+	const finalHtmlFile = interactive ? htmlFileOnDisk || requestedHtml : null;
+	const iframeUrl = interactive && finalHtmlFile ? `/blog/${slug}/${finalHtmlFile}` : null;
+	const iframeHeight =
+		data.iframeHeight !== undefined && data.iframeHeight !== null && String(data.iframeHeight).trim()
+			? String(data.iframeHeight).trim()
+			: "80vh";
+
+	return {
+		interactive,
+		type: interactive ? "html" : typeStr || "markdown",
+		htmlFile: finalHtmlFile,
+		iframeUrl,
+		iframeHeight
+	};
 }
 
 /**
@@ -546,7 +713,7 @@ export async function getAllPosts() {
 			if (!slug) continue;
 
 			const postDir = path.join(blogDir, entry.name);
-			const { languages, fileMap } = await detectDirectoryLanguages(postDir);
+			const { languages, fileMap } = await detectDirectoryLanguages(postDir, slug);
 			if (languages.length === 0) continue;
 
 			// Primary file: prefer cs, then en, then first available
@@ -566,7 +733,8 @@ export async function getAllPosts() {
 				const postCategories = resolveCategories(data);
 				const postAuthors = resolveAuthors(data);
 				const postDate = data.date ? new Date(data.date) : new Date();
-				const thumbnail = resolveThumbnail(data, content, slug);
+				const thumbnail = resolveThumbnail(data, content, slug, postDir);
+				const interactiveMeta = resolveInteractiveConfig(data, postDir, slug);
 
 				posts.push({
 					slug,
@@ -590,7 +758,12 @@ export async function getAllPosts() {
 					languages,
 					image: thumbnail ? thumbnail.image : null,
 					imageAlt: thumbnail ? thumbnail.imageAlt : null,
-					imageSource: thumbnail ? thumbnail.imageSource : null
+					imageSource: thumbnail ? thumbnail.imageSource : null,
+					interactive: interactiveMeta.interactive,
+					type: interactiveMeta.type,
+					htmlFile: interactiveMeta.htmlFile,
+					iframeUrl: interactiveMeta.iframeUrl,
+					iframeHeight: interactiveMeta.iframeHeight
 				});
 			} catch (err) {
 				console.error(`Error reading blog post at ${primaryFile}:`, err);
@@ -624,7 +797,7 @@ export async function getPostBySlug(slug, requestedLang = "cs") {
 		return null;
 	}
 
-	const { languages: availableLanguages, fileMap } = await detectDirectoryLanguages(postDir);
+	const { languages: availableLanguages, fileMap } = await detectDirectoryLanguages(postDir, validSlug);
 	if (availableLanguages.length === 0) {
 		return null;
 	}
@@ -697,13 +870,17 @@ export async function getPostBySlug(slug, requestedLang = "cs") {
 			return `<a href="${href}"${titleAttr}${downloadAttr}${targetAttr}>${text}</a>`;
 		};
 
-		const rawHtml = marked.parse(content, { renderer, gfm: true, breaks: false });
-		const html = rewriteRelativeUrlsInHtml(rawHtml, `/blog/${validSlug}`);
+		const hasMarkdownContent = Boolean(content && content.trim().length > 0);
+		const rawHtml = hasMarkdownContent
+			? marked.parse(content, { renderer, gfm: true, breaks: false })
+			: "";
+		const html = hasMarkdownContent ? rewriteRelativeUrlsInHtml(rawHtml, `/blog/${validSlug}`) : "";
 
 		const postDate = data.date ? new Date(data.date) : new Date();
-		const thumbnail = resolveThumbnail(data, content, validSlug);
+		const thumbnail = resolveThumbnail(data, content, validSlug, postDir);
 		const postAuthors = resolveAuthors(data);
 		const postCategories = resolveCategories(data);
+		const interactiveMeta = resolveInteractiveConfig(data, postDir, validSlug);
 
 		const localeMap = {
 			cs: "cs-CZ",
@@ -735,13 +912,20 @@ export async function getPostBySlug(slug, requestedLang = "cs") {
 			categoryItems: postCategories.categoryItems,
 			description: data.description || data.excerpt || "",
 			html,
+			hasMarkdownContent,
 			lang: activeLang,
 			availableLanguages,
 			isFallback,
 			requestedLang: req,
 			image: thumbnail ? thumbnail.image : null,
 			imageAlt: thumbnail ? thumbnail.imageAlt : null,
-			imageSource: thumbnail ? thumbnail.imageSource : null
+			imageSource: thumbnail ? thumbnail.imageSource : null,
+			interactive: interactiveMeta.interactive,
+			type: interactiveMeta.type,
+			htmlFile: interactiveMeta.htmlFile,
+			iframeUrl: interactiveMeta.iframeUrl,
+			iframeHeight: interactiveMeta.iframeHeight,
+			contentPosition: data.contentPosition || "below"
 		};
 	} catch (err) {
 		console.error(`Error processing post ${validSlug}:`, err);
@@ -770,9 +954,12 @@ export async function getPostsByCategory(categoryParam) {
 /**
  * Fetch all unique categories with counts and associated posts.
  * Sorted by post count descending, then alphabetically by name.
+ * If categoryFilter is provided, only includes posts matching that category.
  */
-export async function getAllCategories() {
-	const posts = await getAllPosts();
+export async function getAllCategories(categoryFilter = null) {
+	const posts = categoryFilter
+		? await getPostsByCategory(categoryFilter)
+		: await getAllPosts();
 	const map = new Map();
 
 	for (const post of posts) {

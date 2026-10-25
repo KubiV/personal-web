@@ -61,14 +61,16 @@ let lastFilePath = null;
 const CACHE_CHECK_INTERVAL_MS = 2000; // Check file stat at most once every 2 seconds
 
 /**
- * Locate optional runtime site.json in content directory.
- * Checks server-content/site.json or server-content/site.config.json.
+ * Locate optional runtime site.json or site.config.json in content directory or project root.
  */
 function findRuntimeConfigFile() {
 	const contentDir = getContentPath();
+	const cwd = process.cwd();
 	const candidates = [
 		path.join(contentDir, 'site.json'),
-		path.join(contentDir, 'site.config.json')
+		path.join(contentDir, 'site.config.json'),
+		path.join(cwd, 'site.config.json'),
+		path.join(cwd, 'site.json')
 	];
 
 	for (const candidate of candidates) {
@@ -164,4 +166,120 @@ export function getSiteConfig() {
  */
 export function getThemeCss() {
 	return getSiteRuntimeData().themeCss;
+}
+
+/**
+ * Extract normalized host, hostname, port, and protocol from a SvelteKit RequestEvent.
+ * Respects reverse proxy / Cloudflare headers (x-forwarded-host, x-forwarded-proto, host).
+ */
+export function getRequestHostInfo(event) {
+	const headers = event?.request?.headers;
+	const rawHost =
+		headers?.get('x-forwarded-host')?.split(',')[0]?.trim() ||
+		headers?.get('host')?.split(',')[0]?.trim() ||
+		event?.url?.host ||
+		event?.url?.hostname ||
+		'localhost';
+
+	const rawProto =
+		headers?.get('x-forwarded-proto')?.split(',')[0]?.trim() ||
+		event?.url?.protocol?.replace(':', '') ||
+		'http';
+
+	const proto = rawProto === 'https' || rawProto === 'http' ? rawProto : 'https';
+
+	let hostname = rawHost.toLowerCase().trim();
+	let port = '';
+
+	const colonIdx = hostname.indexOf(':');
+	if (colonIdx !== -1) {
+		port = hostname.slice(colonIdx);
+		hostname = hostname.slice(0, colonIdx);
+	}
+
+	let subCandidate = null;
+	let baseHostname = hostname;
+
+	if (hostname.endsWith('.localhost')) {
+		subCandidate = hostname.slice(0, -'.localhost'.length);
+		baseHostname = 'localhost';
+	} else {
+		const parts = hostname.split('.');
+		if (parts.length >= 3) {
+			subCandidate = parts[0];
+			baseHostname = parts.slice(1).join('.');
+		}
+	}
+
+	const baseHost = `${baseHostname}${port}`;
+	const origin = `${proto}://${hostname}${port}`;
+	const baseOrigin = `${proto}://${baseHost}`;
+
+	return {
+		rawHost,
+		hostname,
+		port,
+		proto,
+		subCandidate,
+		baseHostname,
+		baseHost,
+		origin,
+		baseOrigin
+	};
+}
+
+/**
+ * Resolve active subdomain configuration from request event.
+ * Matches subdomain against `config.subdomains` in site.config.json / site.json.
+ */
+export function resolveSubdomainData(event) {
+	const { config } = getSiteRuntimeData();
+	const subdomains = config?.subdomains;
+	if (!subdomains || typeof subdomains !== 'object') {
+		return null;
+	}
+
+	const hostInfo = getRequestHostInfo(event);
+	const candidate = hostInfo.subCandidate;
+
+	if (!candidate || candidate === 'www') {
+		return null;
+	}
+
+	const matchedKey = Object.keys(subdomains).find(
+		(key) => key !== '_comment' && key.toLowerCase() === candidate.toLowerCase()
+	);
+
+	if (!matchedKey) {
+		return null;
+	}
+
+	const subConfig = subdomains[matchedKey];
+	if (!subConfig || typeof subConfig !== 'object') {
+		return null;
+	}
+
+	const accentColor = subConfig.accentColor || config.theme?.accentColor || '#14A4FF';
+	const mainSiteUrl = subConfig.mainSiteUrl || hostInfo.baseOrigin || config.url || '/';
+
+	return {
+		subdomain: matchedKey.toLowerCase(),
+		category: subConfig.category || matchedKey.toLowerCase(),
+		title: subConfig.title || `${config.title || 'KubiV'} | ${matchedKey}`,
+		tagline: subConfig.tagline || subConfig.description || config.tagline || '',
+		description: subConfig.description || config.description || '',
+		accentColor,
+		navTitle: subConfig.navTitle || subConfig.title || config.logo?.text || config.title || 'KubiV',
+		heroTitle: subConfig.heroTitle || subConfig.title || config.home?.heroTitle || 'Vítejte',
+		heroLead: subConfig.heroLead || subConfig.description || config.home?.heroLead || '',
+		heroText: subConfig.heroText !== undefined ? subConfig.heroText : '',
+		origin: hostInfo.origin,
+		baseOrigin: hostInfo.baseOrigin,
+		baseHostname: hostInfo.baseHostname,
+		baseHost: hostInfo.baseHost,
+		proto: hostInfo.proto,
+		mainSiteUrl,
+		mainSiteTitle: config.logo?.text || config.title || 'KubiV',
+		themeCss: generateThemeCss(accentColor)
+	};
 }

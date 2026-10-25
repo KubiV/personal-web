@@ -7,7 +7,12 @@
 
 	export let data;
 	$: siteConfig = data?.siteConfig;
-	$: canonicalUrl = `${$page.url.origin}${$page.url.pathname}${$page.url.searchParams.has('lang') ? `?lang=${$page.url.searchParams.get('lang')}` : ''}`;
+	$: subdomainData = data?.subdomainData;
+	$: effectiveOrigin = subdomainData?.origin || data?.hostInfo?.origin || $page.url.origin;
+	$: langQuery = $page.url.searchParams.has('lang') ? `?lang=${$page.url.searchParams.get('lang')}` : '';
+	$: canonicalUrl = $page.data?.canonicalOrigin
+		? `${$page.data.canonicalOrigin}${$page.url.pathname}${langQuery}`
+		: `${effectiveOrigin}${$page.url.pathname}${langQuery}`;
 	$: navItems = siteConfig?.nav || [
 		{ label: 'Home', href: '/' },
 		{ label: 'Blog', href: '/blog' },
@@ -36,10 +41,21 @@
 
 <header class="site-header">
 	<div class="container">
-		<a href="/" class="site-title">
-			<LogoIcon src={siteConfig?.logo?.iconUrl} />
-			<span>{siteConfig?.logo?.text || siteConfig?.title || 'KubiV'}</span>
-		</a>
+		<div class="site-brand-group">
+			<a href="/" class="site-title">
+				<LogoIcon src={siteConfig?.logo?.iconUrl} />
+				<span>{siteConfig?.logo?.text || siteConfig?.title || 'KubiV'}</span>
+			</a>
+			{#if subdomainData}
+				<a
+					href={subdomainData.mainSiteUrl}
+					class="main-site-return-pill"
+					title="Zpět na hlavní web {subdomainData.mainSiteTitle}"
+				>
+					&larr; {subdomainData.mainSiteTitle}
+				</a>
+			{/if}
+		</div>
 		<div class="header-right">
 			<nav class="site-nav" aria-label="Main Navigation">
 				{#each navItems as item}
@@ -64,8 +80,14 @@
 
 <footer class="site-footer">
 	<div class="container">
-		<div>
-			&copy; {new Date().getFullYear()} {siteConfig?.footer?.copyright || siteConfig?.title || 'KubiV'}
+		<div class="footer-left">
+			<span>&copy; {new Date().getFullYear()} {siteConfig?.footer?.copyright || siteConfig?.title || 'KubiV'}</span>
+			{#if subdomainData}
+				<span class="footer-sep">&bull;</span>
+				<a href={subdomainData.mainSiteUrl} class="footer-main-site-link">
+					&larr; Zpět na hlavní web ({subdomainData.mainSiteTitle})
+				</a>
+			{/if}
 		</div>
 		<SocialLinks links={siteConfig?.social} />
 	</div>

@@ -172,6 +172,61 @@ Tento text se zobrazuje v horní kartě profilu vedle 3D modelu a zároveň se p
 
 ---
 
+## 🌐 Multi-subdoménový provoz na jedné instanci (`subdomains`)
+
+Web umožňuje provozovat tematické subdomény (např. `med.vavra.pro`) na **jediné běžící instanci kontejneru** (`personal-web:3000`).
+
+Stačí v `server-content/site.json` přidat sekci `subdomains`:
+
+```json
+{
+  "subdomains": {
+    "med": {
+      "category": "medicina",
+      "title": "KubiV | Medicína",
+      "description": "Články a interaktivní projekty z medicíny",
+      "accentColor": "#059669",
+      "navTitle": "KubiV.med"
+    }
+  }
+}
+```
+
+### Co se na subdoméně automaticky stane:
+- **Detekce v `hooks.server.js`:** Ze záhlaví `x-forwarded-host` / `host` (z Cloudflare Tunnelu nebo reverse proxy) se rozpozná subdoména (např. `med`).
+- **Automatické filtrování obsahu:** Na úvodní stránce (`/`) i v přehledu článků (`/blog` a `/category`) se zobrazují pouze články zařazené v dané kategorii (`medicina` / `Medicína`).
+- **Dynamický barevný motiv:** CSS proměnné (`--accent`, `--accent-color`, `--accent-hover`, `--top-bar-gradient` atd.) se okamžitě přepočítají podle `accentColor` dané subdomény.
+- **Vlastní název v hlavičce (`navTitle`) a odkaz zpět:** Hlavička zobrazí např. `KubiV.med` a vedle něj i v patičce decentní odkaz pro návrat na hlavní doménu.
+- **SEO a Sitemap:** Canonical URL a `/sitemap.xml` respektují příslušnou subdoménu a nevznikají duplicity.
+
+---
+
+## 🧩 Interaktivní HTML+JS články (`interactive: true`)
+
+Kromě klasických Markdown článků můžete do složky `server-content/blog/<slug>/` nahrát kompletní interaktivní HTML+JS aplikaci:
+
+1. Vytvořte složku článku, např. `server-content/blog/ekg-simulator/`.
+2. Nahrajte do ní `index.html`, případné `.js`, `.css`, `.json`, fonty a volitelný náhledový obrázek `cover.png` nebo `cover.jpg`.
+3. Vytvořte soubor `index.md` (nebo `<slug>.md`) s frontmatterem:
+
+```markdown
+---
+title: "Interaktivní EKG simulátor"
+date: "2026-10-25"
+category: "Medicína"
+description: "Interaktivní webová aplikace pro simulaci EKG křivek."
+interactive: true
+html: "index.html"
+iframeHeight: "800px"
+---
+
+Volitelný doprovodný text v Markdownu, který se vykreslí pod interaktivním oknem.
+```
+
+Aplikace se zobrazí v izolovaném `<iframe sandbox>` se zachováním hlavičky webu, SEO metadat a přepínačem na **celou obrazovku (Fullscreen)**.
+
+---
+
 ## 📋 Kompletní vzor `server-content/site.json`
 
 Zkopírujte `site.config.example.json` do `server-content/site.json` a upravte podle sebe:

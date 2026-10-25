@@ -1,9 +1,10 @@
-import { getAllPosts, getAllCategories } from '$lib/server/content.js';
+import { getAllPosts, getAllCategories, getPostsByCategory } from '$lib/server/content.js';
 
-export async function load() {
+export async function load({ locals }) {
+	const subdomainCategory = locals.subdomainData?.category;
 	const [posts, categories] = await Promise.all([
-		getAllPosts(),
-		getAllCategories()
+		subdomainCategory ? getPostsByCategory(subdomainCategory) : getAllPosts(),
+		getAllCategories(subdomainCategory || null)
 	]);
 
 	return {

@@ -138,5 +138,8 @@ export const defaultSiteConfig = {
 	footer: {
 		copyright: 'KubiV',
 		showYear: true
-	}
+	},
+
+	// Pravidla pro tematické subdomény na jedné instanci (např. med.vavra.pro -> "med")
+	subdomains: {}
 };
