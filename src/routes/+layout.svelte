@@ -26,6 +26,12 @@
 		{@html `<style id="dynamic-theme">${data.themeCss}</style>`}
 	{/if}
 	<link rel="canonical" href={canonicalUrl} />
+	<link
+		rel="alternate"
+		type="application/rss+xml"
+		title="{siteConfig?.title || 'KubiV'} - RSS"
+		href="{effectiveOrigin}/rss.xml"
+	/>
 	<meta property="og:site_name" content={siteConfig?.title || 'KubiV'} />
 	<meta property="og:locale" content={$page.url.searchParams.get('lang') === 'en' ? 'en_US' : 'cs_CZ'} />
 	{#if siteConfig?.favicon?.svg}
@@ -40,6 +46,9 @@
 </svelte:head>
 
 <header class="site-header">
+	{#if data?.themeCss}
+		{@html `<style id="dynamic-theme-override">${data.themeCss}</style>`}
+	{/if}
 	<div class="container">
 		<div class="site-brand-group">
 			<a href="/" class="site-title">
@@ -89,6 +98,8 @@
 				</a>
 			{/if}
 		</div>
-		<SocialLinks links={siteConfig?.social} />
+		{#if subdomainData?.showFooterSocial !== false}
+			<SocialLinks links={siteConfig?.social} />
+		{/if}
 	</div>
 </footer>

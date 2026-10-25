@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { getContentPath, getSiteConfig } from '$lib/server/config.js';
 
-export async function GET() {
+export async function GET({ locals }) {
 	// 1. Zkontrolovat, zda uživatel nahrál favicon.svg do server-content/assets/
 	const customFaviconPath = path.join(getContentPath(), 'assets', 'favicon.svg');
 	if (fs.existsSync(customFaviconPath)) {
@@ -24,7 +24,8 @@ export async function GET() {
 	if (fs.existsSync(defaultPath)) {
 		try {
 			let svg = await fs.promises.readFile(defaultPath, 'utf-8');
-			const accentColor = getSiteConfig()?.theme?.accentColor || '#14A4FF';
+			const accentColor =
+				locals?.subdomainData?.accentColor || getSiteConfig()?.theme?.accentColor || '#14A4FF';
 			// Nahradit barvu cesty výchozího loga za aktuální akcentovou barvu webu
 			svg = svg.replace(/fill="#14A4FF"/gi, `fill="${accentColor}"`);
 

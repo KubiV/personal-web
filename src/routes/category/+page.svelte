@@ -5,6 +5,7 @@
 
 	$: siteConfig = data?.siteConfig;
 	$: siteTitle = siteConfig?.title || 'KubiV';
+	$: effectiveOrigin = data?.subdomainData?.origin || data?.hostInfo?.origin || $page.url.origin;
 
 	function formatCats(count) {
 		if (count === 1) return "1 kategorie";
@@ -25,7 +26,7 @@
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Kategorie článků - {siteTitle}" />
 	<meta property="og:description" content="Prohlížeč článků podle kategorií a témat na webu {siteTitle}." />
-	<meta property="og:url" content="{$page.url.origin}/category" />
+	<meta property="og:url" content="{effectiveOrigin}/category" />
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Kategorie článků - {siteTitle}" />
 	<meta name="twitter:description" content="Prohlížeč článků podle kategorií a témat na webu {siteTitle}." />

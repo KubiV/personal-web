@@ -64,18 +64,31 @@
 					{siteConfig.home.heroText}
 				</p>
 			{/if}
-			<div style="margin-top: 1.15rem;">
-				<SocialLinks />
-			</div>
+			{#if siteConfig?.home?.showSocial !== false}
+				<div style="margin-top: 1.15rem;">
+					<SocialLinks />
+				</div>
+			{/if}
 		</div>
-		{#if siteConfig?.logo3d?.enabled !== false && siteConfig?.logo3d?.showOnHome !== false && siteConfig?.logo?.show3D !== false}
+		{#if siteConfig?.home?.heroLogo && typeof siteConfig.home.heroLogo === 'string' && siteConfig.home.heroLogo !== 'none' && !/\.(glb|gltf|obj|stl)$/i.test(siteConfig.home.heroLogo.trim())}
+			<div class="intro-logo-wrapper">
+				<img
+					src={siteConfig.home.heroLogo.trim()}
+					alt="{siteTitle} Logo"
+					class="intro-custom-logo"
+					width={siteConfig?.logo3d?.home?.size || 125}
+					height={siteConfig?.logo3d?.home?.size || 125}
+					style="width: {siteConfig?.logo3d?.home?.size || 125}px; height: {siteConfig?.logo3d?.home?.size || 125}px; object-fit: contain;"
+				/>
+			</div>
+		{:else if siteConfig?.home?.heroLogo !== false && siteConfig?.home?.heroLogo !== 'none' && siteConfig?.logo3d?.enabled !== false && siteConfig?.logo3d?.showOnHome !== false && siteConfig?.logo?.show3D !== false}
 			<div class="intro-logo-wrapper">
 				<Logo3D
 					size={siteConfig?.logo3d?.home?.size || 125}
 					src={siteConfig?.logo3d?.home?.model || siteConfig?.logo?.model3d || '/models/logo.obj'}
 					texture={siteConfig?.logo3d?.home?.texture}
 					material={siteConfig?.logo3d?.home?.material}
-					color={siteConfig?.logo3d?.home?.color}
+					color={siteConfig?.logo3d?.home?.color || siteConfig?.theme?.accentColor || '#14A4FF'}
 					metalness={siteConfig?.logo3d?.home?.metalness}
 					roughness={siteConfig?.logo3d?.home?.roughness}
 					initialRotation={siteConfig?.logo3d?.home?.rotation || siteConfig?.logo3d?.home?.initialRotation || { x: 0, y: 0, z: 0 }}

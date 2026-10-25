@@ -181,12 +181,16 @@ export function getRequestHostInfo(event) {
 		event?.url?.hostname ||
 		'localhost';
 
-	const rawProto =
-		headers?.get('x-forwarded-proto')?.split(',')[0]?.trim() ||
-		event?.url?.protocol?.replace(':', '') ||
-		'http';
-
-	const proto = rawProto === 'https' || rawProto === 'http' ? rawProto : 'https';
+	let cfProto = null;
+	const cfVisitor = headers?.get('cf-visitor');
+	if (cfVisitor) {
+		try {
+			const parsed = JSON.parse(cfVisitor);
+			if (parsed?.scheme === 'https' || parsed?.scheme === 'http') {
+				cfProto = parsed.scheme;
+			}
+		} catch {}
+	}
 
 	let hostname = rawHost.toLowerCase().trim();
 	let port = '';
@@ -196,6 +200,23 @@ export function getRequestHostInfo(event) {
 		port = hostname.slice(colonIdx);
 		hostname = hostname.slice(0, colonIdx);
 	}
+
+	const isLocalHost =
+		hostname === 'localhost' ||
+		hostname === '127.0.0.1' ||
+		hostname.endsWith('.localhost') ||
+		hostname.endsWith('.lan') ||
+		hostname.endsWith('.local') ||
+		/^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+
+	const rawProto =
+		headers?.get('x-forwarded-proto')?.split(',')[0]?.trim() ||
+		cfProto ||
+		(headers?.get('cf-ray') && !isLocalHost ? 'https' : null) ||
+		event?.url?.protocol?.replace(':', '') ||
+		'http';
+
+	const proto = rawProto === 'https' || rawProto === 'http' ? rawProto : 'https';
 
 	let subCandidate = null;
 	let baseHostname = hostname;
@@ -260,7 +281,24 @@ export function resolveSubdomainData(event) {
 	}
 
 	const accentColor = subConfig.accentColor || config.theme?.accentColor || '#14A4FF';
-	const mainSiteUrl = subConfig.mainSiteUrl || hostInfo.baseOrigin || config.url || '/';
+	const mainSiteUrl =
+		subConfig.mainSiteUrl ||
+		(hostInfo.baseHostname === 'localhost' ? hostInfo.baseOrigin : config.url || hostInfo.baseOrigin) ||
+		'/';
+
+	const showSocial =
+		subConfig.showSocial !== undefined
+			? Boolean(subConfig.showSocial)
+			: config.home?.showSocial !== undefined
+				? Boolean(config.home.showSocial)
+				: true;
+
+	const showFooterSocial =
+		subConfig.showFooterSocial !== undefined ? Boolean(subConfig.showFooterSocial) : true;
+
+	const heroLogo = subConfig.heroLogo !== undefined ? subConfig.heroLogo : subConfig.logo;
+	const iconUrl = subConfig.iconUrl || config.logo?.iconUrl || '/logos/logo-flat.svg';
+	const logo3dOverride = subConfig.logo3d && typeof subConfig.logo3d === 'object' ? subConfig.logo3d : null;
 
 	return {
 		subdomain: matchedKey.toLowerCase(),
@@ -270,9 +308,14 @@ export function resolveSubdomainData(event) {
 		description: subConfig.description || config.description || '',
 		accentColor,
 		navTitle: subConfig.navTitle || subConfig.title || config.logo?.text || config.title || 'KubiV',
+		iconUrl,
 		heroTitle: subConfig.heroTitle || subConfig.title || config.home?.heroTitle || 'Vítejte',
 		heroLead: subConfig.heroLead || subConfig.description || config.home?.heroLead || '',
 		heroText: subConfig.heroText !== undefined ? subConfig.heroText : '',
+		showSocial,
+		showFooterSocial,
+		heroLogo: heroLogo !== undefined ? heroLogo : null,
+		logo3d: logo3dOverride,
 		origin: hostInfo.origin,
 		baseOrigin: hostInfo.baseOrigin,
 		baseHostname: hostInfo.baseHostname,

@@ -6,6 +6,7 @@
 	$: about = data.about;
 	$: siteConfig = data?.siteConfig;
 	$: siteTitle = siteConfig?.title || 'KubiV';
+	$: effectiveOrigin = data?.subdomainData?.origin || data?.hostInfo?.origin || $page.url.origin;
 	$: authorName = siteConfig?.author?.name || 'KubiV';
 	$: socialLinksList = siteConfig?.social
 		? Object.values(siteConfig.social).filter(Boolean)
@@ -37,7 +38,7 @@
 		'@context': 'https://schema.org',
 		'@type': 'Person',
 		name: authorName,
-		url: `${$page.url.origin}/about`,
+		url: `${effectiveOrigin}/about`,
 		description: aboutCardDescription || 'Personal profile and projects',
 		sameAs: socialLinksList
 	});
@@ -52,15 +53,15 @@
 	{/if}
 	<meta property="og:type" content="profile" />
 	<meta property="og:title" content="{aboutCardTitle} - {siteTitle}" />
-	<meta property="og:url" content="{$page.url.origin}/about" />
+	<meta property="og:url" content="{effectiveOrigin}/about" />
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="{aboutCardTitle} - {siteTitle}" />
 
 	{#if about?.availableLanguages && about.availableLanguages.length > 1}
 		{#each about.availableLanguages as l}
-			<link rel="alternate" hreflang={l} href="{$page.url.origin}/about?lang={l}" />
+			<link rel="alternate" hreflang={l} href="{effectiveOrigin}/about?lang={l}" />
 		{/each}
-		<link rel="alternate" hreflang="x-default" href="{$page.url.origin}/about" />
+		<link rel="alternate" hreflang="x-default" href="{effectiveOrigin}/about" />
 	{/if}
 
 	{@html `<script type="application/ld+json">${personSchema}</` + `script>`}
@@ -113,7 +114,7 @@
 						src={siteConfig?.logo3d?.about?.model || siteConfig?.logo3d?.home?.model || siteConfig?.logo?.model3d || '/models/logo.obj'}
 						texture={siteConfig?.logo3d?.about?.texture || siteConfig?.logo3d?.home?.texture}
 						material={siteConfig?.logo3d?.about?.material || siteConfig?.logo3d?.home?.material}
-						color={siteConfig?.logo3d?.about?.color || siteConfig?.logo3d?.home?.color}
+						color={siteConfig?.logo3d?.about?.color || siteConfig?.logo3d?.home?.color || siteConfig?.theme?.accentColor || '#14A4FF'}
 						metalness={siteConfig?.logo3d?.about?.metalness ?? siteConfig?.logo3d?.home?.metalness}
 						roughness={siteConfig?.logo3d?.about?.roughness ?? siteConfig?.logo3d?.home?.roughness}
 						initialRotation={siteConfig?.logo3d?.about?.rotation || siteConfig?.logo3d?.about?.initialRotation || siteConfig?.logo3d?.home?.rotation || siteConfig?.logo3d?.home?.initialRotation || { x: 0, y: 0, z: 0 }}

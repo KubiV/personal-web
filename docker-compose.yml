@@ -11,6 +11,8 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - CONTENT_PATH=/data/content
+      - PROTOCOL_HEADER=x-forwarded-proto
+      - HOST_HEADER=x-forwarded-host
     volumes:
       # Mount host NVMe content directory as READ-ONLY for security
       - ./server-content:/data/content:ro

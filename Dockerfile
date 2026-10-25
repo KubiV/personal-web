@@ -26,6 +26,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV CONTENT_PATH=/data/content
+ENV PROTOCOL_HEADER=x-forwarded-proto
+ENV HOST_HEADER=x-forwarded-host
 
 # Copy built bundle and production dependencies from builder stage
 COPY --from=builder /app/package*.json ./

@@ -76,12 +76,14 @@ export function generateThemeCss(accentHex = '#14A4FF') {
 	const hoverDarkHex = rgbToHex(hoverDarkRgb);
 
 	return `
-:root {
+html:root {
   --accent: ${mainHex};
   --accent-color: ${mainHex};
   --accent-hover: ${hoverLightHex};
-  --accent-light: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08);
-  --accent-border: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.30);
+  --link: ${mainHex};
+  --link-hover: ${hoverLightHex};
+  --accent-light: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.10);
+  --accent-border: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.32);
   --accent-glow: 0 0 16px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25);
   --quote-border: ${mainHex};
   --card-bg: linear-gradient(135deg, #ffffff 0%, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.04) 100%);
@@ -89,13 +91,15 @@ export function generateThemeCss(accentHex = '#14A4FF') {
   --top-bar-gradient: linear-gradient(90deg, ${mainHex} 0%, ${gradientEndLightHex} 100%);
 }
 
-:root[data-theme="dark"],
-:root.dark {
+html:root[data-theme="dark"],
+html:root.dark {
   --accent: ${mainHex};
   --accent-color: ${mainHex};
   --accent-hover: ${hoverDarkHex};
-  --accent-light: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15);
-  --accent-border: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35);
+  --link: ${hoverDarkHex};
+  --link-hover: ${mainHex};
+  --accent-light: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.16);
+  --accent-border: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.38);
   --accent-glow: 0 0 20px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35);
   --quote-border: ${hoverDarkHex};
   --card-bg: linear-gradient(135deg, #171c26 0%, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08) 100%);

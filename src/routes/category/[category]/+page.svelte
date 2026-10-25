@@ -5,6 +5,7 @@
 
 	$: siteConfig = data?.siteConfig;
 	$: siteTitle = siteConfig?.title || 'KubiV';
+	$: effectiveOrigin = data?.subdomainData?.origin || data?.hostInfo?.origin || $page.url.origin;
 	$: currentCategoryLower = data.category.toLowerCase();
 
 	function formatArticles(count) {
@@ -20,7 +21,7 @@
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Kategorie: {data.category} - {siteTitle}" />
 	<meta property="og:description" content="Články v kategorii {data.category} na webu {siteTitle}." />
-	<meta property="og:url" content="{$page.url.origin}{$page.url.pathname}" />
+	<meta property="og:url" content="{effectiveOrigin}{$page.url.pathname}" />
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Kategorie: {data.category} - {siteTitle}" />
 	<meta name="twitter:description" content="Články v kategorii {data.category} na webu {siteTitle}." />

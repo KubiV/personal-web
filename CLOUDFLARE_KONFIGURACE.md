@@ -65,25 +65,36 @@ Cloudflare v sekci **DNS** -> **Records** automaticky vytvoří záznam:
 - **Cíl:** `<TUNNEL_ID>.cfargotunnel.com`
 - **Proxy status:** `Proxied` (oranžový mráček zapnut)
 
-### Krok 3: Tematické multi-subdomény na stejný kontejner (např. `med.vasedomena.cz`)
-Pokud chcete provozovat tematickou subdoménu (např. `med.vasedomena.cz` filtrovanou na kategorii `medicina` s vlastním barevným motivem):
-1. V Cloudflare Zero Trust -> **Tunnels** -> **Public Hostnames** přidejte další trasu:
+### Krok 3: Tematické multi-subdomény na stejný kontejner (Příklad: `med.kubiv.cz`)
+Pokud chcete provozovat tematickou subdoménu **`med.kubiv.cz`** (filtrovanou na kategorii `medicina` se smaragdově zeleným motivem) na stejném kontejneru na Raspberry Pi:
+
+1. **V Cloudflare Zero Trust přidejte trasu tunelu:**
+   - Přejděte do **Networks** -> **Tunnels** -> vyberte svůj tunel (např. `malina-server`) -> **Public Hostname** -> **Add a public hostname**.
    - **Subdomain:** `med`
-   - **Domain:** `vasedomena.cz`
-   - **Service:** `http://personal-web:3000` *(směřuje na úplně stejný kontejner jako hlavní web!)*
-2. V souboru `server-content/site.json` (přes Filebrowser CMS) přidejte konfiguraci subdomény:
-   ```json
-   "subdomains": {
-     "med": {
-       "category": "medicina",
-       "title": "KubiV | Medicína",
-       "description": "Články a interaktivní projekty z medicíny",
-       "accentColor": "#059669",
-       "navTitle": "KubiV.med"
+   - **Domain:** `kubiv.cz`
+   - **Path:** *(nechte prázdné)*
+   - **Service Type:** `HTTP`
+   - **URL:** `personal-web:3000` *(směřuje na úplně stejný kontejner jako hlavní web `kubiv.cz`!)*
+   - Klikněte na **Save hostname** (Cloudflare sám vytvoří DNS CNAME záznam pro `med.kubiv.cz` i HTTPS certifikát).
+
+2. **Na Raspberry Pi upravte `server-content/site.json`:**
+   - Otevřete **Filebrowser CMS** (`http://cms.lan`) nebo se připojte přes SSH na Pi (`/srv/compose/personal-web/server-content/site.json`).
+   - Pokud soubor `site.json` ještě nemáte, zkopírujte jej ze šablony `site.json.example`.
+   - Přidejte do něj blok `"subdomains"`:
+     ```json
+     {
+       "subdomains": {
+         "med": {
+           "category": "medicina",
+           "title": "KubiV | Medicína",
+           "description": "Články a interaktivní projekty z medicíny",
+           "accentColor": "#059669",
+           "navTitle": "KubiV.med"
+         }
+       }
      }
-   }
-   ```
-3. Změna v `site.json` se projeví okamžitě bez nutnosti restartovat kontejner.
+     ```
+3. **Hotovo – bez restartu:** Změna v `site.json` se načte okamžitě za běhu. Každý článek, který má v `index.md` uvedeno `category: "Medicína"` (nebo `categories: ["Medicína", ...]`), se automaticky zobrazí na `https://med.kubiv.cz`.
 
 ---
 

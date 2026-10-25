@@ -150,12 +150,14 @@
 		scene.add(mainLight);
 
 		// Jemné doplňkové světlo shora zleva pro přirozené prosvětlení stínů
-		const fillLight = new THREE.DirectionalLight(0x66c0ff, 0.8);
+		const lightTint = color && typeof color === 'string' && color.trim() ? new THREE.Color(color.trim()) : new THREE.Color(0x66c0ff);
+		const fillLight = new THREE.DirectionalLight(lightTint, 0.8);
 		fillLight.position.set(-3.0, 3.0, 4.0);
 		scene.add(fillLight);
 
 		// Horní zadní obrysové světlo (rim light) zvýrazňující horní kontury modelu
-		const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.1);
+		const rimTint = color && typeof color === 'string' && color.trim() ? new THREE.Color(color.trim()) : new THREE.Color(0x38bdf8);
+		const rimLight = new THREE.DirectionalLight(rimTint, 1.1);
 		rimLight.position.set(2.0, 6.0, -2.5);
 		scene.add(rimLight);
 
@@ -614,7 +616,7 @@
 	></canvas>
 
 	<!-- Záložní obrázek pro SSR a dobu načítání -->
-	{#if !isModelLoaded}
+	{#if !isModelLoaded && fallbackSrc && (fallbackSrc !== '/logos/logo-3d.png' || !color || color.toLowerCase() === '#14a4ff' || color.toLowerCase() === '#0095f8')}
 		<img
 			src={fallbackSrc}
 			{alt}

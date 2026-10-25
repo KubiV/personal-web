@@ -2,8 +2,12 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { getPostCategories } from '$lib/utils.js';
+	import PostListItem from '$lib/components/PostListItem.svelte';
 	export let data;
 	$: post = data.post;
+	$: prevPost = data.prevPost;
+	$: nextPost = data.nextPost;
+	$: relatedPosts = data.relatedPosts || [];
 	$: postCategories = getPostCategories(post);
 
 	let iframeWrapperEl;
@@ -111,25 +115,75 @@
 			...(name === defaultAuthorName ? { url: `${effectiveOrigin}/about` } : {})
 		}));
 
+	$: breadcrumbItems = [
+		{
+			'@type': 'ListItem',
+			position: 1,
+			name: siteTitle,
+			item: effectiveOrigin
+		},
+		{
+			'@type': 'ListItem',
+			position: 2,
+			name: 'Blog',
+			item: `${effectiveOrigin}/blog`
+		},
+		...(postCategories.length > 0
+			? [
+					{
+						'@type': 'ListItem',
+						position: 3,
+						name: postCategories[0].name,
+						item: `${effectiveOrigin}/category/${postCategories[0].slug}`
+					},
+					{
+						'@type': 'ListItem',
+						position: 4,
+						name: post.title,
+						item: `${effectiveOrigin}/blog/${post.slug}`
+					}
+				]
+			: [
+					{
+						'@type': 'ListItem',
+						position: 3,
+						name: post.title,
+						item: `${effectiveOrigin}/blog/${post.slug}`
+					}
+				])
+	];
+
 	$: articleSchema = JSON.stringify({
 		'@context': 'https://schema.org',
-		'@type': 'BlogPosting',
-		headline: post.title,
-		description: post.description || '',
-		image: post.image ? `${effectiveOrigin}${post.image}` : undefined,
-		datePublished: post.date,
-		author: articleAuthorSchema,
-		publisher: {
-			'@type': 'Person',
-			name: siteTitle,
-			url: `${effectiveOrigin}`
-		},
-		mainEntityOfPage: {
-			'@type': 'WebPage',
-			'@id': `${effectiveOrigin}/blog/${post.slug}`
-		},
-		inLanguage: post.lang === 'cs' ? 'cs-CZ' : (post.lang === 'en' ? 'en-US' : post.lang),
-		articleSection: postCategories.length > 0 ? postCategories.map((c) => c.name) : post.category
+		'@graph': [
+			{
+				'@type': 'BlogPosting',
+				'@id': `${effectiveOrigin}/blog/${post.slug}#article`,
+				url: `${effectiveOrigin}/blog/${post.slug}`,
+				headline: post.title,
+				description: post.description || '',
+				image: post.image ? `${effectiveOrigin}${post.image}` : undefined,
+				datePublished: post.date,
+				dateModified: post.updated || post.date,
+				author: articleAuthorSchema,
+				publisher: {
+					'@type': 'Person',
+					name: siteTitle,
+					url: `${effectiveOrigin}`
+				},
+				mainEntityOfPage: {
+					'@type': 'WebPage',
+					'@id': `${effectiveOrigin}/blog/${post.slug}`
+				},
+				inLanguage: post.lang === 'cs' ? 'cs-CZ' : (post.lang === 'en' ? 'en-US' : post.lang),
+				articleSection: postCategories.length > 0 ? postCategories.map((c) => c.name) : post.category
+			},
+			{
+				'@type': 'BreadcrumbList',
+				'@id': `${effectiveOrigin}/blog/${post.slug}#breadcrumb`,
+				itemListElement: breadcrumbItems
+			}
+		]
 	});
 </script>
 
@@ -303,10 +357,42 @@
 
 	<hr />
 
+	{#if prevPost || nextPost}
+		<nav class="post-adjacent-nav" aria-label={post.lang === 'en' ? 'Previous and next articles' : 'Předchozí a následující článek'}>
+			{#if prevPost}
+				<a href="/blog/{prevPost.slug}" class="post-adjacent-card post-adjacent-prev">
+					<span class="post-adjacent-label">&larr; {post.lang === 'en' ? 'Older article' : 'Starší článek'}</span>
+					<span class="post-adjacent-title">{prevPost.title}</span>
+				</a>
+			{:else}
+				<div></div>
+			{/if}
+			{#if nextPost}
+				<a href="/blog/{nextPost.slug}" class="post-adjacent-card post-adjacent-next">
+					<span class="post-adjacent-label">{post.lang === 'en' ? 'Newer article' : 'Novější článek'} &rarr;</span>
+					<span class="post-adjacent-title">{nextPost.title}</span>
+				</a>
+			{/if}
+		</nav>
+	{/if}
+
+	{#if relatedPosts.length > 0}
+		<section class="related-posts-section" aria-label={post.lang === 'en' ? 'Related articles' : 'Další články k přečtení'}>
+			<h2 class="related-posts-heading">
+				{post.lang === 'en' ? 'More articles to read' : 'Další články k přečtení'}
+			</h2>
+			<ul class="post-list">
+				{#each relatedPosts as relPost}
+					<PostListItem post={relPost} headingLevel="h3" />
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
 	<div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-		<a href="/blog">&larr; Back to Blog</a>
+		<a href="/blog">&larr; {post.lang === 'en' ? 'Back to Blog' : 'Zpět na přehled článků'}</a>
 		<a href="#top" on:click|preventDefault={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-			Back to top &uarr;
+			{post.lang === 'en' ? 'Back to top' : 'Nahoru'} &uarr;
 		</a>
 	</div>
 </article>

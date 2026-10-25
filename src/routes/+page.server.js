@@ -7,6 +7,6 @@ export async function load({ locals }) {
 		: await getAllPosts();
 
 	return {
-		recentPosts: posts.slice(0, 5)
+		recentPosts: posts.slice(0, 10)
 	};
 }
