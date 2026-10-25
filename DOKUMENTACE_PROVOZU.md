@@ -133,20 +133,16 @@ Když na svém Macu upravíte kód v repozitáři:
    Workflow `.github/workflows/docker-publish.yml` automaticky spustí cloudový build. Vytvoří multi-arch Docker image (`linux/arm64` pro Pi 5 + `linux/amd64`) a nahraje jej do GitHub Container Registry (`ghcr.io/kubiv/personal-web:latest`).
 3. **Aktivace na serveru (3 možnosti):**
    - **Automaticky (Watchtower):** Kontejner `watchtower` na malině pravidelně kontroluje GHCR. Jakmile zjistí nový release, stáhne novou verzi a provede bezvýpadkový restart. *(Podmínka: Package v GitHubu musí být nastaven jako Public).*
-   - **Vzdáleně z Macu:** V kořeni repozitáře na Macu spustíte:
+   - **Vzdáleně z Macu i přímo na malině:** Spustíte univerzální skript:
      ```bash
      ./deploy.sh
      ```
-     Skript se přes SSH připojí k malině a provede bezpečné nasazení.
-   - **Přímo na malině:** Ve složce `/srv/compose/personal-web` spustíte skript:
-     ```bash
-     ./update.sh
-     ```
+     Pokud jej spustíte na Macu, sám se přes SSH připojí k malině a provede nasazení. Pokud jej spustíte přímo na malině v `/srv/compose/personal-web`, provede aktualizaci lokálně.
 
 ### B. Změna konfigurace serveru (`docker-compose.yml`, sítě, porty)
 Pokud upravíte samotný soubor `docker-compose.yml`:
 1. Na Macu odešlete změny: `git commit -am "Změna compose"` a `git push origin main`.
-2. Na serveru spustíte `./update.sh` (nebo z Macu `./deploy.sh`). Docker Compose porovná konfiguraci a restartuje pouze modifikované služby.
+2. Spustíte `./deploy.sh`. Docker Compose porovná konfiguraci a restartuje pouze modifikované služby.
 
 ### C. Publikování článků a fotek (Obsah blogu)
 Správa obsahu **nevyžaduje Git ani restartování Dockeru**:

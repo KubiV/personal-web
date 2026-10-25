@@ -37,6 +37,7 @@ export async function load({ locals }) {
 				text: subdomainData.navTitle,
 				iconUrl: subdomainData.iconUrl || config.logo?.iconUrl
 			},
+			favicon: subdomainData.favicon || config.favicon,
 			logo3d: {
 				...(config.logo3d || {}),
 				...(subLogo3d.enabled !== undefined ? { enabled: Boolean(subLogo3d.enabled) } : {}),

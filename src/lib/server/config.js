@@ -39,6 +39,77 @@ export function normalizeAssetUrl(val) {
 }
 
 /**
+ * Normalize a favicon config value (supports either a single URL string like "/assets/med-logo.svg"
+ * or an object `{ svg, png, appleTouchIcon }`).
+ */
+export function normalizeFaviconConfig(rawFavicon, fallbackFavicon = null) {
+	if (!rawFavicon) return fallbackFavicon;
+
+	if (typeof rawFavicon === 'string') {
+		const trimmed = rawFavicon.trim();
+		if (!trimmed) return fallbackFavicon;
+		const url = normalizeAssetUrl(trimmed);
+		const lower = url.toLowerCase();
+		if (lower.endsWith('.png') || lower.endsWith('.ico') || lower.endsWith('.webp')) {
+			return {
+				svg: '',
+				png: url,
+				appleTouchIcon: url
+			};
+		}
+		return {
+			svg: url,
+			png: '',
+			appleTouchIcon: fallbackFavicon?.appleTouchIcon || '/apple-touch-icon.png'
+		};
+	}
+
+	if (typeof rawFavicon === 'object') {
+		const hasCustomSvg = Boolean(rawFavicon.svg && typeof rawFavicon.svg === 'string' && rawFavicon.svg.trim());
+		return {
+			svg: rawFavicon.svg !== undefined ? normalizeAssetUrl(rawFavicon.svg) : (fallbackFavicon?.svg || '/favicon.svg'),
+			png:
+				rawFavicon.png !== undefined
+					? normalizeAssetUrl(rawFavicon.png)
+					: hasCustomSvg
+						? ''
+						: (fallbackFavicon?.png || '/favicon.png'),
+			appleTouchIcon:
+				rawFavicon.appleTouchIcon !== undefined
+					? normalizeAssetUrl(rawFavicon.appleTouchIcon)
+					: (fallbackFavicon?.appleTouchIcon || '/apple-touch-icon.png')
+		};
+	}
+
+	return fallbackFavicon;
+}
+
+/**
+ * Resolve a normalized asset URL (e.g. "/assets/med-logo.svg" or "/custom-assets/med-logo.svg")
+ * to an absolute file path on disk if it exists inside `server-content/assets/`.
+ */
+export function resolveLocalAssetFile(urlPath) {
+	if (!urlPath || typeof urlPath !== 'string') return null;
+	const normalized = normalizeAssetUrl(urlPath);
+	let rel = null;
+	if (normalized.startsWith('/assets/')) {
+		rel = normalized.slice('/assets/'.length);
+	} else if (normalized.startsWith('/custom-assets/')) {
+		rel = normalized.slice('/custom-assets/'.length);
+	}
+	if (!rel || rel.includes('..') || rel.includes('\0')) return null;
+
+	const assetsDir = path.resolve(getContentPath(), 'assets');
+	const candidate = path.resolve(assetsDir, rel);
+	if (!candidate.startsWith(assetsDir)) return null;
+
+	if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+		return candidate;
+	}
+	return null;
+}
+
+/**
  * Deep merge utility for objects.
  * Target keys take precedence over source keys.
  * Preserves default values for any keys omitted in target.
@@ -155,9 +226,12 @@ export function getSiteRuntimeData() {
 			}
 		}
 
-		// Normalizace cest k logům a 3D modelům (podpora /assets/..., assets/..., /custom-assets/...)
+		// Normalizace cest k logům, favikonám a 3D modelům (podpora /assets/..., assets/..., /custom-assets/...)
 		if (merged.logo?.iconUrl) {
 			merged.logo.iconUrl = normalizeAssetUrl(merged.logo.iconUrl);
+		}
+		if (userConfig?.favicon !== undefined) {
+			merged.favicon = normalizeFaviconConfig(userConfig.favicon, defaultSiteConfig.favicon);
 		}
 		if (merged.home?.heroLogo && typeof merged.home.heroLogo === 'string') {
 			merged.home.heroLogo = normalizeAssetUrl(merged.home.heroLogo);
@@ -348,6 +422,11 @@ export function resolveSubdomainData(event) {
 		'/logos/logo-flat.svg';
 	const iconUrl = normalizeAssetUrl(rawIconUrl);
 
+	const favicon =
+		subConfig.favicon !== undefined
+			? normalizeFaviconConfig(subConfig.favicon, config.favicon)
+			: null;
+
 	const logo3dOverride =
 		subConfig.logo3d && typeof subConfig.logo3d === 'object'
 			? {
@@ -376,6 +455,7 @@ export function resolveSubdomainData(event) {
 			config.title ||
 			'KubiV',
 		iconUrl,
+		favicon,
 		heroTitle: subConfig.heroTitle || subConfig.title || config.home?.heroTitle || 'Vítejte',
 		heroLead: subConfig.heroLead || subConfig.description || config.home?.heroLead || '',
 		heroText: subConfig.heroText !== undefined ? subConfig.heroText : '',

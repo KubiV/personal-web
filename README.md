@@ -69,8 +69,7 @@ personal-web/
 ├── .env.example                     # Template for Raspberry Pi .env file
 ├── docker-compose.yml               # Production stack (personal-web, filebrowser, watchtower)
 ├── Dockerfile                       # Multi-stage Node 20 Alpine build (ARM64 / AMD64)
-├── update.sh                        # Local update script (runs directly on Raspberry Pi)
-└── deploy.sh                        # Remote deploy trigger (runs on Mac via SSH -> Pi)
+└── deploy.sh                        # Unified deploy & update script (Mac via SSH or directly on Pi)
 ```
 
 ### Host Content Directory (`./server-content` &rarr; `/data/content`)
@@ -97,13 +96,12 @@ server-content/                      # Ignored by Git (.gitignore), persisted on
 
 ---
 
-## 🛠️ Deployment & Update Scripts (`update.sh` vs. `deploy.sh`)
+## 🛠️ Deployment & Updates (`./deploy.sh`)
 
 | Skript / Soubor | Kde se spouští / nachází | Co přesně dělá |
 | :--- | :--- | :--- |
-| **`./update.sh`** | **Přímo na Raspberry Pi** (`/srv/compose/personal-web`) | Stáhne nejnovější kód z GitHubu (`git pull origin main`), zajistí existenci `.env` a složek `server-content/assets`, nastaví oprávnění (`1000:1000`), stáhne nejnovější Docker image (`docker compose pull`), restartuje kontejnery (`docker compose up -d`) a vyčistí staré Docker vrstvy (`docker image prune -f`). |
-| **`./deploy.sh`** | **Na tvém Macu** (lokální počítač) | Připojí se přes SSH na Raspberry Pi (`pi@malina.local`), přejde do `/srv/compose/personal-web` a vzdáleně tam spustí `./update.sh`. |
-| **`.env`** | **Přímo na Raspberry Pi** (`/srv/compose/personal-web/.env`) | Obsahuje proměnné prostředí pro Docker Compose (`PERSONAL_WEB_IMAGE`, `TUNNEL_TOKEN`, `UID`, `GID`). Z bezpečnostních důvodů je v `.gitignore` (v Gitu je pouze šablona `.env.example`). |
+| **`./deploy.sh`** | **Na Macu** *(přes SSH)* nebo **přímo na Raspberry Pi** | Univerzální skript: pokud ho spustíš na Macu, připojí se přes SSH na `pi@malina.local` (`/srv/compose/personal-web`). Pokud ho spustíš přímo na Pi, běží lokálně. Stáhne změny z GitHubu (`git pull origin main`), připraví složky a oprávnění (`1000:1000`), stáhne nejnovější Docker image (`docker compose pull`), restartuje kontejnery (`docker compose up -d`) a vyčistí staré vrstvy (`docker image prune -f`). |
+| **`.env.example`** | Volitelná šablona (`.env` na Pi) | Výchozí hodnoty (`PERSONAL_WEB_IMAGE`, porty, `UID`/`GID`) jsou již nastavené přímo v `docker-compose.yml`, takže vlastní `.env` je potřeba jen tehdy, pokud je chceš přepsat. |
 
 ---
 
@@ -138,8 +136,8 @@ cp .env.example .env
 mkdir -p filebrowser server-content/blog server-content/assets
 cp site.config.example.json server-content/site.json
 
-# 3. Launch the stack (or simply run ./update.sh)
-./update.sh
+# 3. Launch the stack
+./deploy.sh
 ```
 
 ---

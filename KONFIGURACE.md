@@ -32,7 +32,7 @@ Web využívá robustní dvouúrovňový konfigurační systém:
 
 ## 🛡️ Garance kompatibility při aktualizaci
 
-Při aktualizaci webu (např. spuštěním `./update.sh` nebo příkazu `git pull origin main`):
+Při aktualizaci webu (např. spuštěním `./deploy.sh` nebo příkazu `git pull origin main`):
 
 1. **Žádné Git konflikty:**
    - Vaše osobní konfigurace `server-content/site.json`, vlastní loga a favikony v `server-content/assets/` a veškeré články v `server-content/blog/` leží ve složce `server-content/`.
@@ -188,6 +188,7 @@ Stačí v `server-content/site.json` přidat sekci `subdomains`:
       "accentColor": "#059669",
       "navTitle": "KubiV.med",
       "iconUrl": "/assets/med-logo.svg",
+      "favicon": "/assets/med-logo.svg",
       "showSocial": false,
       "heroLogo": "/assets/med-logo.svg"
     }
@@ -199,10 +200,11 @@ Stačí v `server-content/site.json` přidat sekci `subdomains`:
 - **Detekce v `hooks.server.js`:** Ze záhlaví `x-forwarded-host` / `host` (z Cloudflare Tunnelu nebo reverse proxy) se rozpozná subdoména (např. `med`).
 - **Automatické filtrování obsahu:** Na úvodní stránce (`/`) i v přehledu článků (`/blog` a `/category`) se zobrazují pouze články zařazené v dané kategorii (`medicina` / `Medicína`).
 - **Dynamický barevný motiv:** CSS proměnné (`--accent`, `--accent-color`, `--accent-hover`, `--top-bar-gradient`, barva měsíčku v dark mode přepínači atd.) se okamžitě přepočítají podle `accentColor` dané subdomény.
-- **Vlastní název a loga (`navTitle`, `iconUrl`, `heroLogo`):**
+- **Vlastní název, loga a favicon (`navTitle`, `iconUrl`, `heroLogo`, `favicon`):**
   - `navTitle`: text v levém horním rohu hlavičky (např. `KubiV.med`).
   - `iconUrl`: volitelné malé logo v hlavičce vedle názvu (např. `"/assets/med-logo.svg"`).
   - `heroLogo`: volitelné velké logo (2D SVG/PNG nebo 3D `.obj`/`.glb`/`.stl` model, případně `false`/`"none"` pro skrytí) zobrazené vpravo v úvodní sekci místo hlavního 3D loga.
+  - `favicon`: volitelná vlastní ikona záložky prohlížeče pro subdoménu – lze zadat přímo cestu k souboru (např. `"/assets/med-logo.svg"` nebo `"/assets/med-favicon.png"`) nebo objekt `{ "svg": "/assets/med-logo.svg", "png": "/assets/med-favicon.png" }`. Alternativně lze do `assets/` nahrát soubor pojmenovaný `favicon-med.svg` a subdoména jej načte automaticky.
 - **SEO a Sitemap:** Canonical URL a `/sitemap.xml` respektují příslušnou subdoménu a nevznikají duplicity.
 
 ---

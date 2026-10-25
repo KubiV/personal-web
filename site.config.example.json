@@ -103,7 +103,7 @@
   },
 
   "subdomains": {
-    "_comment": "Definice tematických subdomén běžících na stejné instanci (např. med.kubiv.cz). Automaticky filtruje články podle kategorie, přepíná barevný motiv, viditelnost sociálních sítí (showSocial), ikonu v hlavičce (iconUrl) a pravé logo v úvodu (heroLogo).",
+    "_comment": "Definice tematických subdomén běžících na stejné instanci (např. med.kubiv.cz). Automaticky filtruje články podle kategorie, přepíná barevný motiv, viditelnost sociálních sítí (showSocial), ikonu v hlavičce (iconUrl), favicon a pravé logo v úvodu (heroLogo).",
     "med": {
       "category": "medicina",
       "title": "KubiV | Medicína",
@@ -111,6 +111,7 @@
       "accentColor": "#059669",
       "navTitle": "KubiV.med",
       "iconUrl": "/assets/med-logo.svg",
+      "favicon": "/assets/med-logo.svg",
       "showSocial": false,
       "heroLogo": "/assets/med-logo.svg"
     }

@@ -38,7 +38,12 @@
 		<link rel="icon" type="image/svg+xml" href={siteConfig.favicon.svg} />
 	{/if}
 	{#if siteConfig?.favicon?.png}
-		<link rel="alternate icon" type="image/png" sizes="64x64" href={siteConfig.favicon.png} />
+		<link
+			rel={siteConfig?.favicon?.svg ? 'alternate icon' : 'icon'}
+			type="image/png"
+			sizes="64x64"
+			href={siteConfig.favicon.png}
+		/>
 	{/if}
 	{#if siteConfig?.favicon?.appleTouchIcon}
 		<link rel="apple-touch-icon" href={siteConfig.favicon.appleTouchIcon} />

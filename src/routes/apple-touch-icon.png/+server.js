@@ -1,52 +1,39 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getContentPath } from '$lib/server/config.js';
+import { getContentPath, getSiteConfig, resolveLocalAssetFile } from '$lib/server/config.js';
 
-export async function GET() {
+export async function GET({ locals }) {
 	const contentDir = getContentPath();
+	const subData = locals?.subdomainData;
+	const siteConfig = getSiteConfig();
 
-	// 1. Zkontrolovat apple-touch-icon.png v server-content/assets/
-	const customTouchPath = path.join(contentDir, 'assets', 'apple-touch-icon.png');
-	if (fs.existsSync(customTouchPath)) {
-		try {
-			const buffer = await fs.promises.readFile(customTouchPath);
-			return new Response(buffer, {
-				headers: {
-					'Content-Type': 'image/png',
-					'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
-				}
-			});
-		} catch (err) {
-			console.error('[apple-touch-icon.png] Chyba při čtení custom icon:', err);
+	const candidates = [
+		...(subData
+			? [
+					resolveLocalAssetFile(subData.favicon?.appleTouchIcon),
+					resolveLocalAssetFile(subData.favicon?.png),
+					path.join(contentDir, 'assets', `apple-touch-icon-${subData.subdomain}.png`),
+					path.join(contentDir, 'assets', `favicon-${subData.subdomain}.png`)
+				]
+			: []),
+		resolveLocalAssetFile(siteConfig?.favicon?.appleTouchIcon),
+		path.join(contentDir, 'assets', 'apple-touch-icon.png'),
+		path.join(contentDir, 'assets', 'favicon.png'),
+		path.resolve('static/apple-touch-icon-default.png')
+	].filter(Boolean);
+
+	for (const candidate of candidates) {
+		if (fs.existsSync(candidate)) {
+			try {
+				const buffer = await fs.promises.readFile(candidate);
+				return new Response(buffer, {
+					headers: {
+						'Content-Type': 'image/png',
+						'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
+					}
+				});
+			} catch (err) {}
 		}
-	}
-
-	// 2. Případný fallback na favicon.png v assets
-	const customPngPath = path.join(contentDir, 'assets', 'favicon.png');
-	if (fs.existsSync(customPngPath)) {
-		try {
-			const buffer = await fs.promises.readFile(customPngPath);
-			return new Response(buffer, {
-				headers: {
-					'Content-Type': 'image/png',
-					'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
-				}
-			});
-		} catch (err) {}
-	}
-
-	// 3. Fallback na výchozí apple-touch-icon-default.png
-	const defaultPath = path.resolve('static/apple-touch-icon-default.png');
-	if (fs.existsSync(defaultPath)) {
-		try {
-			const buffer = await fs.promises.readFile(defaultPath);
-			return new Response(buffer, {
-				headers: {
-					'Content-Type': 'image/png',
-					'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
-				}
-			});
-		} catch (err) {}
 	}
 
 	return new Response('Not found', { status: 404 });

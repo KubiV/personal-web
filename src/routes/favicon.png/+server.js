@@ -1,37 +1,38 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getContentPath } from '$lib/server/config.js';
+import { getContentPath, getSiteConfig, resolveLocalAssetFile } from '$lib/server/config.js';
 
-export async function GET() {
-	// 1. Zkontrolovat, zda existuje favicon.png v server-content/assets/
-	const customFaviconPath = path.join(getContentPath(), 'assets', 'favicon.png');
-	if (fs.existsSync(customFaviconPath)) {
-		try {
-			const buffer = await fs.promises.readFile(customFaviconPath);
-			return new Response(buffer, {
-				headers: {
-					'Content-Type': 'image/png',
-					'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
-				}
-			});
-		} catch (err) {
-			console.error('[favicon.png] Chyba při čtení custom favicon:', err);
-		}
-	}
+export async function GET({ locals }) {
+	const contentDir = getContentPath();
+	const subData = locals?.subdomainData;
+	const siteConfig = getSiteConfig();
 
-	// 2. Fallback na výchozí favicon-default.png
-	const defaultPath = path.resolve('static/favicon-default.png');
-	if (fs.existsSync(defaultPath)) {
-		try {
-			const buffer = await fs.promises.readFile(defaultPath);
-			return new Response(buffer, {
-				headers: {
-					'Content-Type': 'image/png',
-					'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
-				}
-			});
-		} catch (err) {
-			console.error('[favicon.png] Chyba při čtení výchozí favicon:', err);
+	const candidates = [
+		...(subData
+			? [
+					resolveLocalAssetFile(subData.favicon?.png),
+					path.join(contentDir, 'assets', `favicon-${subData.subdomain}.png`),
+					path.join(contentDir, 'assets', `${subData.subdomain}-favicon.png`)
+				]
+			: []),
+		resolveLocalAssetFile(siteConfig?.favicon?.png),
+		path.join(contentDir, 'assets', 'favicon.png'),
+		path.resolve('static/favicon-default.png')
+	].filter(Boolean);
+
+	for (const candidate of candidates) {
+		if (fs.existsSync(candidate)) {
+			try {
+				const buffer = await fs.promises.readFile(candidate);
+				return new Response(buffer, {
+					headers: {
+						'Content-Type': 'image/png',
+						'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
+					}
+				});
+			} catch (err) {
+				console.error('[favicon.png] Chyba při čtení favicon:', err);
+			}
 		}
 	}
 
